@@ -1,9 +1,10 @@
 import { SideBar } from './SideBar'
 
-const AppLayout = () => {
+const AppLayout = ({ children }) => {
   return (
-    <div>
-      <SideBar />
+    <div className='w-screen h-screen grid grid-cols-[80px_1fr]'>
+      <SideBar className='col-span-1' />
+      <div className='col-span-1'>{children}</div>
     </div>
   )
 }
