@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Phone, Search, User, X, ArrowLeft, UserCircle } from "lucide-react";
 import AppLayout from "@/app/(page)/layouts/AppLayout";
 
@@ -12,6 +12,7 @@ const Page = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [isCalling, setIsCalling] = useState(false);
+  const inputRef = useRef(null);
 
   const mockCustomers = [
     {
@@ -67,15 +68,43 @@ const Page = () => {
   }, [searchTerm, customers]);
 
   const handleNumberClick = (number) => {
-    setPhoneNumber((prev) => prev + number);
+    if (phoneNumber.length >= 15 && !hasSelection()) return;
+    
+    const input = inputRef.current;
+    if (input && hasSelection()) {
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      
+      const newNumber = phoneNumber.slice(0, start) + number + phoneNumber.slice(end);
+      setPhoneNumber(newNumber);
+      
+      setTimeout(() => {
+        input.setSelectionRange(start + 1, start + 1);
+      }, 0);
+    } else {
+      setPhoneNumber((prev) => prev + number);
+    }
   };
 
   const handleBackspace = () => {
-    setPhoneNumber((prev) => prev.slice(0, -1));
+    const input = inputRef.current;
+    if (input && hasSelection()) {
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const newNumber = phoneNumber.slice(0, start) + phoneNumber.slice(end);
+      setPhoneNumber(newNumber);
+      
+      setTimeout(() => {
+        input.setSelectionRange(start, start);
+      }, 0);
+    } else {
+      setPhoneNumber((prev) => prev.slice(0, -1));
+    }
   };
 
-  const handleClear = () => {
-    setPhoneNumber("");
+  const hasSelection = () => {
+    const input = inputRef.current;
+    return input && input.selectionStart !== input.selectionEnd;
   };
 
   const handleCustomerSelect = (customer) => {
@@ -248,18 +277,35 @@ const Page = () => {
 
                   <div className="mb-8 bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
                     <div className="flex items-center justify-between">
-                      <div className="text-3xl font-mono font-bold text-white">
-                        {phoneNumber || "Phone number"}
-                      </div>
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={phoneNumber}
+                        onChange={(e) => {
+                          if (e.target.value.length <= 15) {
+                            setPhoneNumber(e.target.value);
+                          }
+                        }}
+                        placeholder="Phone number"
+                        className="w-full text-3xl font-mono font-bold text-white bg-transparent border-none outline-none placeholder-white/40"
+                        style={{ caretColor: 'white' }}
+                      />
                       {phoneNumber && (
                         <button
                           onClick={handleBackspace}
-                          className="p-2 text-white/60 hover:text-white transition-colors hover:bg-white/10 rounded-lg"
+                          className="p-2 text-white/60 hover:text-white transition-colors hover:bg-white/10 rounded-lg ml-2"
                         >
                           <ArrowLeft className="h-6 w-6" />
                         </button>
                       )}
                     </div>
+                    {phoneNumber.length > 0 && (
+                      <div className="text-right mt-2">
+                        <span className="text-sm text-white/40">
+                          {phoneNumber.length}/15
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-3 gap-3 mb-8">
@@ -269,7 +315,8 @@ const Page = () => {
                           <button
                             key={item.number}
                             onClick={() => handleNumberClick(item.number)}
-                            className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-white transition-all duration-200  hover:border-white/20  group"
+                            disabled={phoneNumber.length >= 15 && !hasSelection()}
+                            className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-white transition-all duration-200 hover:border-white/20 disabled:opacity-30 disabled:cursor-not-allowed group"
                           >
                             <div className="flex flex-col items-center justify-center h-full">
                               <span className="text-2xl font-semibold group-hover:text-purple-300 transition-colors">
