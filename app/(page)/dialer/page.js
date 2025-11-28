@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { Search, UserCircle } from "lucide-react";
 import AppLayout from "@/app/(page)/layouts/AppLayout";
 import Dialer from "./components/Dialer";
+import CallList from "./components/CallList";
 
 const Page = () => {
   const [customers, setCustomers] = useState([]);
@@ -13,7 +14,7 @@ const Page = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [isCalling, setIsCalling] = useState(false);
-  const [activeTab, setActiveTab] = useState("dialer"); // 'dialer' or 'customers'
+  const [activeTab, setActiveTab] = useState("dialer"); // 'dialer' or 'list'
 
   const mockCustomers = [
     {
@@ -71,7 +72,7 @@ const Page = () => {
   const handleCustomerSelect = (customer) => {
     setSelectedCustomer(customer);
     setPhoneNumber(customer.phone);
-    setActiveTab("dialer"); // Switch to dialer when customer is selected
+    setActiveTab("list"); // Switch to call list when customer is selected
   };
 
   const handleCall = async () => {
@@ -165,6 +166,14 @@ const Page = () => {
               setSelectedCustomer={setSelectedCustomer}
               isCalling={isCalling}
               handleCall={handleCall}
+            />
+          )}
+          
+          {activeTab === "list" && selectedCustomer && (
+            <CallList
+              selectedCustomer={selectedCustomer}
+              setActiveTab={setActiveTab}
+              setPhoneNumber={setPhoneNumber}
             />
           )}
         </div>
