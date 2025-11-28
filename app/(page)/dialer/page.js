@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Phone, Search, User, X, ArrowLeft, UserCircle } from "lucide-react";
+import { Phone, Search, X, ArrowLeft, UserCircle } from "lucide-react";
 import AppLayout from "@/app/(page)/layouts/AppLayout";
 
 const Page = () => {
