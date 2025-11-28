@@ -168,13 +168,14 @@ const Page = () => {
     <AppLayout>
       <div className="w-full h-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
         <div className="w-full h-full flex">
+          {/* Customer List Sidebar */}
           <div className="w-96 h-full bg-white/5 backdrop-blur-xl border-r border-white/10 p-6 flex flex-col">
-            <div className="mb-6">
+            <div className="mb-6 flex-shrink-0">
               <h1 className="text-2xl font-bold text-white mb-2">Customers</h1>
               <p className="text-white/60">Select a customer to call</p>
             </div>
 
-            <div className="relative mb-6">
+            <div className="relative mb-6 flex-shrink-0">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 h-5 w-5" />
               <input
                 type="text"
@@ -185,7 +186,7 @@ const Page = () => {
               />
             </div>
 
-            <div className="flex-1 h-full overflow-y-auto space-y-2">
+            <div className="flex-1 min-h-0 overflow-y-auto no-button-scrollbar pr-2 space-y-2">
               {filteredCustomers.map((customer) => (
                 <div
                   key={customer.id}
@@ -216,6 +217,7 @@ const Page = () => {
             </div>
           </div>
 
+          {/* Dialer Section */}
           <div className="flex-1 h-full p-8 flex items-center justify-center">
             <div className="max-w-md w-full">
               {isCalling ? (
@@ -299,13 +301,6 @@ const Page = () => {
                         </button>
                       )}
                     </div>
-                    {phoneNumber.length > 0 && (
-                      <div className="text-right mt-2">
-                        <span className="text-sm text-white/40">
-                          {phoneNumber.length}/15
-                        </span>
-                      </div>
-                    )}
                   </div>
 
                   <div className="grid grid-cols-3 gap-3 mb-8">
