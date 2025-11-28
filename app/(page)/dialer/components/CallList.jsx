@@ -22,7 +22,6 @@ const CallList = ({
 
   return (
     <div className="flex-1 h-full flex flex-col">
-      {/* Header */}
       <div className="flex items-center justify-between p-6 border-b border-white/10">
         <div className="flex items-center space-x-4">
           <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
@@ -41,7 +40,6 @@ const CallList = ({
         </button>
       </div>
 
-      {/* Call List */}
       <div className="flex-1 overflow-y-auto no-button-scrollbar p-6">
         <div className="space-y-4">
           {callHistory.map((call) => (
