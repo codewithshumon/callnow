@@ -18,14 +18,12 @@ export const SideBar = ({ className }) => {
 
   return (
     <div className={`${className} bg-slate-900 border-r border-white/10 p-4 flex flex-col`}>
-      {/* Logo */}
       <div className="mb-8 flex justify-center">
         <Link href="/">
           <Logo className='w-8 h-8 text-white' />
         </Link>
       </div>
 
-      {/* Navigation Menu */}
       <nav className="flex-1 space-y-2">
         {menuItems.map((item) => {
           const Icon = item.icon

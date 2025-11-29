@@ -14,7 +14,7 @@ const Page = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [isCalling, setIsCalling] = useState(false);
-  const [activeTab, setActiveTab] = useState("dialer"); // 'dialer' or 'list'
+  const [activeTab, setActiveTab] = useState("dialer");
 
   const mockCustomers = [
     {
@@ -72,7 +72,7 @@ const Page = () => {
   const handleCustomerSelect = (customer) => {
     setSelectedCustomer(customer);
     setPhoneNumber(customer.phone);
-    setActiveTab("list"); // Switch to call list when customer is selected
+    setActiveTab("list");
   };
 
   const handleCall = async () => {
@@ -108,7 +108,6 @@ const Page = () => {
     <AppLayout>
       <div className="w-full h-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
         <div className="w-full h-full flex">
-          {/* Customer List Sidebar */}
           <div className="w-96 h-full bg-white/5 backdrop-blur-xl border-r border-white/10 p-6 flex flex-col">
             <div className="mb-6 flex-shrink-0">
               <h1 className="text-2xl font-bold text-white mb-2">Customers</h1>
@@ -157,7 +156,6 @@ const Page = () => {
             </div>
           </div>
 
-          {/* Main Content Area */}
           {activeTab === "dialer" && (
             <Dialer
               phoneNumber={phoneNumber}
