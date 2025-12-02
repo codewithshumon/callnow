@@ -17,7 +17,12 @@ import {
   Tag,
   MessageSquare,
   Download,
-  Settings
+  Settings,
+  Table,
+  Eye,
+  EyeOff,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import Papa from "papaparse";
 
@@ -26,9 +31,12 @@ const Page = () => {
   const [customers, setCustomers] = useState([]);
   const [currentCustomerIndex, setCurrentCustomerIndex] = useState(0);
   const [currentNumberIndex, setCurrentNumberIndex] = useState(0);
-  const [callStatus, setCallStatus] = useState('idle'); // 'idle', 'dialing', 'connected', 'ended', 'failed'
+  const [callStatus, setCallStatus] = useState('idle');
   const [isAutoDialing, setIsAutoDialing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [showPreview, setShowPreview] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [stats, setStats] = useState({
     total: 0,
     called: 0,
@@ -88,6 +96,18 @@ const Page = () => {
     });
   };
 
+  // Pagination calculations
+  const totalPages = Math.ceil(customers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPageData = customers.slice(startIndex, endIndex);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
   const getCurrentPhoneNumber = () => {
     if (!customers[currentCustomerIndex]) return '';
     const numbers = [
@@ -110,15 +130,12 @@ const Page = () => {
 
     setCallStatus('dialing');
     
-    // Simulate dialing phase
     setTimeout(() => {
-      // Randomly determine if call connects (70% success rate for demo)
       const isConnected = Math.random() > 0.3;
       
       if (isConnected) {
         setCallStatus('connected');
         
-        // Update customer status
         const updatedCustomers = [...customers];
         updatedCustomers[currentCustomerIndex] = {
           ...currentCustomer,
@@ -133,14 +150,12 @@ const Page = () => {
           pending: prev.pending - 1
         }));
         
-        // Simulate call duration
         timerRef.current = setTimeout(() => {
           endCall();
-        }, 3000 + Math.random() * 7000); // Random call duration 3-10 seconds
+        }, 3000 + Math.random() * 7000);
       } else {
         setCallStatus('failed');
         
-        // Update customer status
         const updatedCustomers = [...customers];
         updatedCustomers[currentCustomerIndex] = {
           ...currentCustomer,
@@ -178,10 +193,8 @@ const Page = () => {
 
   const skipCustomer = () => {
     if (currentNumberIndex < 2) {
-      // Try next number for same customer
       setCurrentNumberIndex(prev => prev + 1);
     } else {
-      // Move to next customer
       moveToNext();
     }
   };
@@ -193,23 +206,19 @@ const Page = () => {
       setCurrentCustomerIndex(prev => prev + 1);
       setCurrentNumberIndex(0);
       
-      // Update stats
       setStats(prev => ({
         ...prev,
         called: prev.called + 1
       }));
       
-      // Continue auto-dialing if enabled
       if (isAutoDialing) {
         setTimeout(() => simulateCall(), 1000);
       }
     } else {
-      // End of list
       setIsAutoDialing(false);
       setCallStatus('ended');
     }
     
-    // Update progress
     const newProgress = ((currentCustomerIndex + 1) / customers.length) * 100;
     setProgress(newProgress);
   };
@@ -238,7 +247,6 @@ const Page = () => {
     }
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) {
@@ -303,20 +311,144 @@ const Page = () => {
               </div>
 
               {customers.length > 0 && (
-                <div className="mt-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-white/60">{customers.length} contacts loaded</span>
-                    <span className="text-sm font-medium">{Math.round(progress)}% complete</span>
+                <>
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-white/60">{customers.length} contacts loaded</span>
+                      <span className="text-sm font-medium">{Math.round(progress)}% complete</span>
+                    </div>
+                    <div className="w-full bg-white/10 rounded-full h-2">
+                      <div 
+                        className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full bg-white/10 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </div>
+
+                  {/* File Preview Toggle */}
+                  <button
+                    onClick={() => setShowPreview(!showPreview)}
+                    className="w-full mt-4 flex items-center justify-center space-x-2 py-2 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-colors"
+                  >
+                    {showPreview ? (
+                      <>
+                        <EyeOff className="h-4 w-4" />
+                        <span>Hide Preview</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="h-4 w-4" />
+                        <span>Show Preview</span>
+                      </>
+                    )}
+                  </button>
+                </>
               )}
             </div>
+
+            {/* File Preview Modal */}
+            {showPreview && customers.length > 0 && (
+              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold flex items-center space-x-2">
+                    <Table className="h-5 w-5" />
+                    <span>File Preview</span>
+                  </h2>
+                  <div className="text-sm text-white/60">
+                    {customers.length} rows
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto mb-4">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-white/20">
+                        <th className="text-left p-2 text-white/60">#</th>
+                        <th className="text-left p-2 text-white/60">Name</th>
+                        <th className="text-left p-2 text-white/60">Company</th>
+                        <th className="text-left p-2 text-white/60">Phone 1</th>
+                        <th className="text-left p-2 text-white/60">Type</th>
+                        <th className="text-left p-2 text-white/60">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentPageData.map((customer) => (
+                        <tr 
+                          key={customer.id}
+                          className={`border-b border-white/10 hover:bg-white/5 ${
+                            customer.id === currentCustomer?.id ? 'bg-purple-500/10' : ''
+                          }`}
+                        >
+                          <td className="p-2">{customer.id}</td>
+                          <td className="p-2 font-medium">{customer.customerName}</td>
+                          <td className="p-2">{customer.companyName}</td>
+                          <td className="p-2 font-mono">{customer.phone1}</td>
+                          <td className="p-2">
+                            <span className="px-2 py-1 bg-white/10 rounded-full text-xs">
+                              {customer.customerType}
+                            </span>
+                          </td>
+                          <td className="p-2">
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              customer.status === 'connected' ? 'bg-green-500/20 text-green-300' :
+                              customer.status === 'failed' ? 'bg-red-500/20 text-red-300' :
+                              customer.status === 'dialing' ? 'bg-yellow-500/20 text-yellow-300' :
+                              'bg-white/10 text-white/60'
+                            }`}>
+                              {customer.status || 'pending'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination */}
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-white/60">
+                    Showing {startIndex + 1}-{Math.min(endIndex, customers.length)} of {customers.length}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="p-1 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="text-sm">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="p-1 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Items per page selector */}
+                <div className="mt-4">
+                  <label className="text-sm text-white/60 mr-2">Rows per page:</label>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="bg-white/10 border border-white/20 rounded px-2 py-1 text-sm"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+              </div>
+            )}
 
             {/* Controls */}
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
