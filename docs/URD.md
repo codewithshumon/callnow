@@ -100,7 +100,7 @@ Priya runs a small e-commerce business. She wants a dedicated business number fo
 
 ### Persona 4 — Dev Team (API User)
 
-> **Age:** 27 | **Location:** Remote | **Tech Level:** Expert**
+> **Age:** 27 | **Location:** Remote | **Tech Level:** Expert
 
 A developer integrating VoiceLink into their company's internal tooling. They need programmatic access to send SMS and trigger calls via API.
 

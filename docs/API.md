@@ -63,6 +63,118 @@ Register a new user account.
 
 ---
 
+### POST /auth/logout
+Invalidate the current refresh token and end the session.
+
+**Request:**
+```json
+{ "refreshToken": "eyJ..." }
+```
+**Response 200:**
+```json
+{ "success": true, "data": { "message": "Logged out" } }
+```
+
+---
+
+### POST /auth/verify-email
+Verify email address using the token sent during registration.
+
+**Request:**
+```json
+{ "token": "abc123..." }
+```
+**Response 200:**
+```json
+{ "success": true, "data": { "message": "Email verified" } }
+```
+
+---
+
+### POST /auth/forgot-password
+Request a password reset email.
+
+**Request:**
+```json
+{ "email": "sarah@example.com" }
+```
+**Response 200:**
+```json
+{ "success": true, "data": { "message": "If the email exists, a reset link has been sent" } }
+```
+
+---
+
+### POST /auth/reset-password
+Reset password using the token received in email.
+
+**Request:**
+```json
+{ "token": "abc123...", "password": "NewSecurePass123!" }
+```
+**Response 200:**
+```json
+{ "success": true, "data": { "message": "Password reset successful" } }
+```
+
+---
+
+### POST /auth/google
+Authenticate with a Google OAuth 2.0 ID token.
+
+**Request:**
+```json
+{ "idToken": "eyJ..." }
+```
+**Response 200:**
+```json
+{ "success": true, "data": { "accessToken": "eyJ...", "refreshToken": "eyJ...", "expiresIn": 900 } }
+```
+
+---
+
+### POST /auth/login/phone
+Request or verify an SMS OTP for phone-based login.
+
+**Request (request OTP):**
+```json
+{ "phone": "+14155551234", "action": "request" }
+```
+**Request (verify OTP):**
+```json
+{ "phone": "+14155551234", "code": "123456", "action": "verify" }
+```
+**Response 200 (verify success):**
+```json
+{ "success": true, "data": { "accessToken": "eyJ...", "refreshToken": "eyJ...", "expiresIn": 900 } }
+```
+
+---
+
+### POST /auth/2fa/enable
+Enable TOTP two-factor authentication for the authenticated user. Returns a TOTP secret and QR code URL for setup.
+
+**Response 200:**
+```json
+{ "success": true, "data": { "secret": "JBSWY3DPEHPK3PXP", "qrCodeUrl": "otpauth://..." } }
+```
+
+---
+
+### POST /auth/2fa/verify
+Verify a TOTP code during login (when 2FA is enabled on the account).
+
+**Request:**
+```json
+{ "loginToken": "eyJ...", "code": "123456" }
+```
+**Response 200:**
+```json
+{ "success": true, "data": { "accessToken": "eyJ...", "refreshToken": "eyJ...", "expiresIn": 900 } }
+```
+
+---
+
 ## Phone Numbers
 
 ### GET /numbers
@@ -91,17 +203,12 @@ List all numbers belonging to the authenticated user.
 
 ---
 
-### POST /numbers/search
+### GET /numbers/search
 Search available numbers to purchase.
 
-**Request:**
-```json
-{
-  "countryCode": "US",
-  "areaCode": "415",
-  "capabilities": ["voice", "sms"]
-}
-```
+**Query params:** `?countryCode=US&areaCode=415&capabilities=voice,sms`
+
+**Response 200:**
 **Response 200:**
 ```json
 {

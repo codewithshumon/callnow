@@ -613,6 +613,38 @@ CREATE TABLE subscriptions (
   current_period_end TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Usage Records (per-user monthly tracking)
+CREATE TABLE usage_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  period_start DATE NOT NULL,
+  period_end DATE NOT NULL,
+  minutes_used INTEGER DEFAULT 0,
+  sms_sent INTEGER DEFAULT 0,
+  sms_received INTEGER DEFAULT 0,
+  numbers_held INTEGER DEFAULT 0,
+  prepaid_credits_remaining DECIMAL(10,4) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, period_start)
+);
+CREATE INDEX idx_usage_records_user_period ON usage_records(user_id, period_start DESC);
+
+-- Invoices
+CREATE TABLE invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  stripe_invoice_id VARCHAR(100),
+  amount DECIMAL(10,2) NOT NULL,
+  currency CHAR(3) DEFAULT 'USD',
+  status VARCHAR(20) NOT NULL,          -- draft, open, paid, void, uncollectible
+  period_start DATE NOT NULL,
+  period_end DATE NOT NULL,
+  pdf_url TEXT,
+  paid_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_invoices_user ON invoices(user_id, created_at DESC);
 ```
 
 ### 5.3 Migration from v1.0 Schema
@@ -763,7 +795,6 @@ When the active provider supports voicemail transcription natively (e.g., Twilio
 ### 8.1 Docker Compose (Development)
 
 ```yaml
-version: '3.8'
 services:
   frontend:
     build: ./frontend
@@ -862,6 +893,7 @@ STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 SENDGRID_API_KEY=
 DIALER_SERVICE_URL=
+INTERNAL_API_KEY=
 API_BASE_URL=
 ```
 
