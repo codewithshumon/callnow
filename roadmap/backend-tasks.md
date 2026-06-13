@@ -4,6 +4,210 @@
 > **Stack:** NestJS 10 · Prisma ORM · PostgreSQL 15 · Redis 7 · Twilio SDK (v1)
 > **Current state:** Fresh scaffold (`AppController.getHello()` only)
 > **Target:** Complete production-ready API gateway
+>
+> **⚠️ Power Dialer Engine:** The actual dialing engine is a separate **Go Echo microservice**. Its complete task list lives in **[roadmap/dialer-tasks.md](roadmap/dialer-tasks.md)**. This file covers only the NestJS-side dialer proxy (Phase 8) that manages campaigns and communicates with the Go service via internal HTTP.
+
+---
+
+## Best-Practice Folder Structure (Target)
+
+```
+/backend
+├── src/
+│   ├── main.ts                          # Bootstrap, global pipes/filters/interceptors
+│   ├── app.module.ts                    # Root module — wire all feature modules
+│   │
+│   ├── common/                          # Shared layer — zero feature dependencies
+│   │   ├── decorators/
+│   │   │   ├── current-user.decorator.ts     # @CurrentUser() — extract req.user
+│   │   │   ├── roles.decorator.ts            # @Roles('admin')
+│   │   │   └── public.decorator.ts           # @Public() — skip JWT auth
+│   │   ├── filters/
+│   │   │   └── http-exception.filter.ts      # Global error → { success, error }
+│   │   ├── guards/
+│   │   │   ├── jwt-auth.guard.ts             # Global JWT guard (respects @Public)
+│   │   │   ├── roles.guard.ts                # Role-based access control
+│   │   │   └── api-key.guard.ts              # API key auth for Persona 4
+│   │   ├── interceptors/
+│   │   │   ├── transform.interceptor.ts      # Wrap 2xx in { success, data }
+│   │   │   ├── logging.interceptor.ts        # Log every request with duration
+│   │   │   └── request-id.interceptor.ts     # X-Request-ID propagation
+│   │   ├── pipes/
+│   │   │   └── validation.pipe.ts            # Global ValidationPipe config
+│   │   ├── middleware/
+│   │   │   └── request-id.middleware.ts
+│   │   └── types/
+│   │       └── express.d.ts                  # Extend Express Request with user
+│   │
+│   ├── config/                          # Configuration module — env vars → typed config
+│   │   ├── config.module.ts
+│   │   ├── database.config.ts
+│   │   ├── redis.config.ts
+│   │   ├── jwt.config.ts
+│   │   ├── telephony.config.ts
+│   │   └── app.config.ts
+│   │
+│   ├── prisma/                          # Database layer
+│   │   ├── prisma.module.ts             # Global module — exports PrismaService
+│   │   ├── prisma.service.ts            # onModuleInit connect, onModuleDestroy disconnect
+│   │   └── prisma.utils.ts              # Transaction helper, pagination helper
+│   │
+│   ├── auth/                            # Authentication & authorization
+│   │   ├── auth.module.ts
+│   │   ├── auth.controller.ts
+│   │   ├── auth.service.ts
+│   │   ├── strategies/
+│   │   │   ├── jwt.strategy.ts
+│   │   │   └── google.strategy.ts
+│   │   └── dto/
+│   │       ├── register.dto.ts
+│   │       ├── login.dto.ts
+│   │       ├── refresh.dto.ts
+│   │       ├── forgot-password.dto.ts
+│   │       ├── reset-password.dto.ts
+│   │       ├── phone-otp.dto.ts
+│   │       └── verify-2fa.dto.ts
+│   │
+│   ├── telephony/                       # Provider Abstraction Layer
+│   │   ├── telephony.module.ts          # Provider factory + global export
+│   │   ├── interfaces/
+│   │   │   └── telephony-provider.interface.ts
+│   │   ├── providers/
+│   │   │   ├── twilio.provider.ts       # Active implementation
+│   │   │   ├── vonage.provider.ts       # Stub
+│   │   │   ├── bandwidth.provider.ts    # Stub
+│   │   │   ├── plivo.provider.ts        # Stub
+│   │   │   └── telnyx.provider.ts       # Stub
+│   │   ├── status-maps/
+│   │   │   ├── twilio.json
+│   │   │   ├── vonage.json
+│   │   │   └── bandwidth.json
+│   │   └── guards/
+│   │       └── webhook-signature.guard.ts
+│   │
+│   ├── numbers/                         # Virtual number management
+│   │   ├── numbers.module.ts
+│   │   ├── numbers.controller.ts
+│   │   ├── numbers.service.ts
+│   │   └── dto/
+│   │       ├── search-numbers.dto.ts
+│   │       └── provision-number.dto.ts
+│   │
+│   ├── messaging/                       # SMS/MMS messaging
+│   │   ├── messaging.module.ts
+│   │   ├── messaging.controller.ts      # REST: conversations, messages
+│   │   ├── messaging.service.ts
+│   │   ├── messaging.gateway.ts         # WebSocket: message:new, message:status
+│   │   ├── webhooks/
+│   │   │   └── sms-webhook.controller.ts
+│   │   └── dto/
+│   │       ├── send-message.dto.ts
+│   │       └── query-messages.dto.ts
+│   │
+│   ├── calling/                         # VoIP calling
+│   │   ├── calling.module.ts
+│   │   ├── calling.controller.ts        # REST: calls, voicemails, token
+│   │   ├── calling.service.ts
+│   │   ├── calling.gateway.ts           # WebSocket: call:inbound, call:status
+│   │   ├── webhooks/
+│   │   │   └── voice-webhook.controller.ts
+│   │   └── dto/
+│   │       └── call-query.dto.ts
+│   │
+│   ├── dialer/                          # Power dialer — NestJS proxy to Go service
+│   │   ├── dialer.module.ts
+│   │   ├── dialer.controller.ts         # REST: campaign CRUD → Go
+│   │   ├── dialer.service.ts            # HTTP client to Go dialer-service
+│   │   ├── dialer.gateway.ts            # WebSocket: campaign:progress, campaign:complete
+│   │   ├── csv-validator.ts             # Pre-upload CSV validation
+│   │   ├── dto/
+│   │   │   ├── create-campaign.dto.ts
+│   │   │   └── campaign-query.dto.ts
+│   │   └── internal/                    # Internal endpoints (called by Go)
+│   │       └── dialer-callback.controller.ts
+│   │
+│   ├── contacts/                        # Contact management
+│   │   ├── contacts.module.ts
+│   │   ├── contacts.controller.ts
+│   │   ├── contacts.service.ts
+│   │   └── dto/
+│   │       ├── create-contact.dto.ts
+│   │       └── update-contact.dto.ts
+│   │
+│   ├── billing/                         # Stripe billing & usage tracking
+│   │   ├── billing.module.ts
+│   │   ├── billing.controller.ts
+│   │   ├── billing.service.ts
+│   │   ├── usage-tracker.service.ts
+│   │   ├── webhooks/
+│   │   │   └── stripe-webhook.controller.ts
+│   │   └── dto/
+│   │       └── upgrade-plan.dto.ts
+│   │
+│   ├── templates/                       # Message templates
+│   │   ├── templates.module.ts
+│   │   ├── templates.controller.ts
+│   │   ├── templates.service.ts
+│   │   └── dto/
+│   │       └── template.dto.ts
+│   │
+│   ├── api-keys/                        # API key management (Persona 4)
+│   │   ├── api-keys.module.ts
+│   │   ├── api-keys.controller.ts
+│   │   └── api-keys.service.ts
+│   │
+│   ├── audit/                           # Audit logging
+│   │   ├── audit.module.ts
+│   │   ├── audit.service.ts
+│   │   └── audit.controller.ts          # Admin-only: GET /admin/audit-logs
+│   │
+│   ├── jobs/                            # Scheduled jobs (cron)
+│   │   ├── jobs.module.ts
+│   │   ├── number-grace-period.job.ts
+│   │   ├── usage-alert.job.ts
+│   │   ├── invoice-generation.job.ts
+│   │   ├── data-retention.job.ts
+│   │   ├── token-cleanup.job.ts
+│   │   └── scheduled-message.job.ts
+│   │
+│   └── health/                          # Health check
+│       ├── health.module.ts
+│       └── health.controller.ts
+│
+├── prisma/
+│   ├── schema.prisma
+│   ├── migrations/
+│   └── seed.ts                          # Seed plans + dev data
+│
+├── test/
+│   ├── unit/
+│   ├── e2e/
+│   └── fixtures/
+│       └── valid-contacts.csv
+│
+├── Dockerfile
+├── .env.example
+├── nest-cli.json
+├── tsconfig.json
+└── package.json
+```
+
+### NestJS Best Practices Applied
+
+| Principle | Implementation |
+|---|---|
+| **Module encapsulation** | Each feature is a self-contained module — controller, service, DTOs, tests live together |
+| **Global providers** | `PrismaService`, `ConfigService`, `TELEPHONY_PROVIDER` are globally available via `@Global()` modules |
+| **Controller ≤ Service ≤ Repository** | Controllers are thin (bind/validate/delegate). Services hold business logic. Prisma is the repository layer. |
+| **DTOs per endpoint** | Each endpoint gets dedicated DTO with `class-validator` decorators — not one DTO reused across endpoints |
+| **Pipes for validation** | Global `ValidationPipe` with `whitelist: true, transform: true` — no manual validation in controllers |
+| **Guards for auth** | `JwtAuthGuard` is global (registered in `APP_GUARD`). `@Public()` decorator exempts specific routes. |
+| **Interceptors for cross-cutting** | Response transform, logging, request ID — registered globally, no per-controller boilerplate |
+| **Filters for errors** | Single global exception filter maps all exceptions to `{ success: false, error: { code, message } }` |
+| **Repository pattern** | Prisma is abstracted behind `PrismaService` — services never import `@prisma/client` directly |
+| **Environment config** | All config via `ConfigModule` with typed `registerAs()` — no `process.env` outside config files |
+| **WebSocket separation** | Gateways live in their feature module but only emit events — services call `gateway.emit*()` methods |
+| **Internal API auth** | Go service → NestJS callbacks authenticated via shared `INTERNAL_API_KEY`, not JWT |
 
 ---
 
@@ -353,66 +557,96 @@
 
 ---
 
-## Phase 8 — Dialer Module (NestJS Side)
+## Phase 8 — Dialer Module (NestJS Proxy to Go Service)
 
-> **Note:** The actual dialing engine is the Go Echo service (SDD §4). The NestJS Dialer module manages campaigns: create, configure, start/stop, and proxy to Go.
+> **⚠️ Split architecture:** The **Go Echo microservice** handles the actual dialing engine (worker pool, outbound calls, retry logic, calling hours, etc.). Its complete task list is in **[roadmap/dialer-tasks.md](roadmap/dialer-tasks.md)**.
+>
+> This NestJS Dialer module is the **front-end proxy**: it manages campaign CRUD, CSV upload/validation, DNC lists, and communicates with the Go service via internal HTTP. The Go service calls back to NestJS for progress updates, which this module broadcasts to the frontend via WebSocket.
+>
+> ```
+> Browser ──REST/WS──► NestJS DialerModule ──HTTP──► Go Echo Dialer
+>                              ▲                          │
+>                              └───── progress callback ──┘
+> ```
 
-### 8.1 — Dialer Service
+### 8.1 — Dialer Service (Go HTTP Client)
 
-- [ ] **8.1.1** Create `src/dialer/dialer.service.ts`
-- [ ] **8.1.2** Implement `createCampaign(userId, dto, csvBuffer)` — validate CSV (parse, check phone column, validate E.164 format, check DNC list), report invalid rows, insert `campaigns` row + bulk insert `campaign_contacts` (FR-PD-01, FR-PD-02, FR-PD-03)
-- [ ] **8.1.3** Implement `listCampaigns(userId)` (FR-PD-07)
-- [ ] **8.1.4** Implement `getCampaign(userId, campaignId)` (FR-PD-07)
-- [ ] **8.1.5** Implement `startCampaign(userId, campaignId)` — verify user owns campaign, verify `from_number` is active and owned, check user's `power_dialer_enabled` plan flag, POST to Go dialer `http://dialer-service:8080/campaigns` with campaign config + contact list, update campaign status to `running` (FR-PD-06, US-042)
-- [ ] **8.1.6** Implement `pauseCampaign(userId, campaignId)` — POST to Go, update status to `paused` (FR-PD-06, US-044)
-- [ ] **8.1.7** Implement `resumeCampaign(userId, campaignId)` — POST to Go, update status to `running`
-- [ ] **8.1.8** Implement `stopCampaign(userId, campaignId)` — POST to Go, update status to `stopped`, finalize stats (FR-PD-06)
-- [ ] **8.1.9** Implement `exportCampaignResults(userId, campaignId)` — query `campaign_contacts` for campaign, generate CSV with columns: phone, name, notes, status, attempts, call_duration, last_attempted_at (FR-PD-09, US-047)
-- [ ] **8.1.10** Implement `handleProgressCallback(campaignId, progress)` — internal endpoint called by Go service, update `campaigns` counters (dialed, answered, failed, remaining), emit `campaign:progress` WebSocket to `campaign:{id}` room (FR-PD-07, FR-PD-08, SDD §4.4)
+- [ ] **8.1.1** Create `src/dialer/dialer.service.ts` — HTTP client wrapping calls to the Go dialer service
+- [ ] **8.1.2** Implement `createCampaign(userId, dto, csvBuffer)` — pre-validate CSV (parse, check phone column, validate E.164 format, check DNC list via csv-validator), report invalid rows in response, insert `campaigns` row + bulk insert `campaign_contacts` in PostgreSQL (FR-PD-01, FR-PD-02, FR-PD-03). **Does NOT start the campaign yet.**
+- [ ] **8.1.3** Implement `listCampaigns(userId, page, limit)` — query `campaigns` for user, return paginated (FR-PD-07)
+- [ ] **8.1.4** Implement `getCampaign(userId, campaignId)` — query campaign + live progress if running (FR-PD-07)
+- [ ] **8.1.5** Implement `startCampaign(userId, campaignId)` — verify user owns campaign, verify `from_number` is active and owned, check user's `power_dialer_enabled` plan flag (via Redis cache), POST to Go dialer `http://dialer:8080/campaigns` with campaign config + contact list array, update local campaign status to `running` on success response, return campaign (FR-PD-06, US-042)
+- [ ] **8.1.6** Implement `pauseCampaign(userId, campaignId)` — POST to Go `http://dialer:8080/campaigns/:id/pause`, update local status to `paused` (FR-PD-06, US-044)
+- [ ] **8.1.7** Implement `resumeCampaign(userId, campaignId)` — POST to Go `http://dialer:8080/campaigns/:id/resume`, update local status to `running`
+- [ ] **8.1.8** Implement `stopCampaign(userId, campaignId)` — POST to Go `http://dialer:8080/campaigns/:id/stop`, update local status to `stopped` (FR-PD-06)
+- [ ] **8.1.9** Implement `exportCampaignResults(userId, campaignId)` — proxy to Go `GET http://dialer:8080/campaigns/:id/export`, OR query `campaign_contacts` locally and generate CSV with columns: phone, name, notes, status, attempts, call_duration, last_attempted_at (FR-PD-09, US-047)
+- [ ] **8.1.10** Implement `handleProgressCallback(campaignId, progress)` — **called by Go service** via internal endpoint, update `campaigns` counters (dialed, answered, failed, busy, no_answer), emit `campaign:progress` WebSocket to `campaign:{id}` room. If progress indicates completion, emit `campaign:complete`. (FR-PD-07, FR-PD-08, SDD §4.4)
+- [ ] **8.1.11** Implement `getCampaignResults(userId, campaignId, page, limit)` — proxy to Go `GET http://dialer:8080/campaigns/:id/results?page=&limit=`, return paginated contact results
 
-**Refs:** SRS §3.5, URD §3.5, SDD §4, API §Power Dialer
+**Refs:** SRS §3.5, URD §3.5, SDD §4.3, SDD §4.4, API §Power Dialer, [dialer-tasks.md §6](roadmap/dialer-tasks.md)
 
-### 8.2 — CSV Validation
+### 8.2 — CSV Validation (Pre-Upload)
 
-- [ ] **8.2.1** Create `src/dialer/csv-validator.ts` — parse CSV with `csv-parse`, detect `phone` column (case-insensitive), validate each number against E.164 regex, check against `dnc_list` for user, return report: `{ total, valid, invalid: [{row, reason}], dncSkipped }` (FR-PD-02, FR-PD-03, FR-PD-11)
+> **Note:** CSV parsing happens in both NestJS (pre-validation before sending to Go) and Go (final parse before enqueuing). This gives the user immediate feedback before the campaign is created.
+
+- [ ] **8.2.1** Create `src/dialer/csv-validator.ts` — parse CSV with `csv-parse`, detect `phone` column (case-insensitive match: `phone`, `phonenumber`, `number`, `mobile`, `tel`), validate each number against E.164 regex, check against `dnc_list` for user, return report: `{ total, valid, invalid: [{row, reason}], dncSkipped }` (FR-PD-02, FR-PD-03, FR-PD-11)
+- [ ] **8.2.2** Reject files with 0 valid rows with clear error message
+- [ ] **8.2.3** Support optional `name` and `notes` columns — include if present, ignore unknown columns
 
 **Refs:** URD AC for US-040
 
-### 8.3 — Dialer Controller
+### 8.3 — Dialer Controller (REST)
 
-- [ ] **8.3.1** Create `src/dialer/dialer.controller.ts`
-  - `GET /campaigns` — list
-  - `POST /campaigns` — create (multipart/form-data with CSV)
-  - `POST /campaigns/:id/start`
-  - `POST /campaigns/:id/pause`
-  - `POST /campaigns/:id/stop`
-  - `GET /campaigns/:id/export`
+- [ ] **8.3.1** Create `src/dialer/dialer.controller.ts` — all endpoints require JWT auth:
+  - `GET /campaigns?page=1&limit=20` — list user's campaigns
+  - `POST /campaigns` — create campaign (multipart/form-data with CSV file + campaign config fields)
+  - `GET /campaigns/:id` — get campaign detail + live progress
+  - `POST /campaigns/:id/start` — forward to Go service
+  - `POST /campaigns/:id/pause` — forward to Go service
+  - `POST /campaigns/:id/resume` — forward to Go service
+  - `POST /campaigns/:id/stop` — forward to Go service (irreversible)
+  - `GET /campaigns/:id/results?page=1&limit=50` — paginated contact results
+  - `GET /campaigns/:id/export` — CSV file download
 
 **Refs:** API §Power Dialer
 
-### 8.4 — Internal Callback Controller
+### 8.4 — Internal Callback Controller (Go → NestJS)
 
-- [ ] **8.4.1** Create `POST /internal/dialer/callback` — receives progress from Go service, validates `INTERNAL_API_KEY`, calls `DialerService.handleProgressCallback()`
+- [ ] **8.4.1** Create `src/dialer/internal/dialer-callback.controller.ts`
+- [ ] **8.4.2** Handle `POST /internal/dialer/callback` — **no JWT** (uses `INTERNAL_API_KEY` header), receives:
+  ```json
+  { "campaignId": "uuid", "dialed": 50, "answered": 20, "failed": 3,
+    "busy": 2, "noAnswer": 5, "remaining": 770 }
+  ```
+- [ ] **8.4.3** Validate `INTERNAL_API_KEY` via custom guard — reject 401 if missing/invalid
+- [ ] **8.4.4** Call `DialerService.handleProgressCallback()`, return 200 `{ "success": true }`
 
-**Refs:** SDD §4.4
+**Refs:** SDD §4.4, [dialer-tasks.md §9](roadmap/dialer-tasks.md)
 
-### 8.5 — Dialer Gateway (WebSocket)
+### 8.5 — Dialer Gateway (WebSocket to Frontend)
 
-- [ ] **8.5.1** Create `src/dialer/dialer.gateway.ts`
-- [ ] **8.5.2** On client connect to campaign room: join `campaign:{campaignId}`
-- [ ] **8.5.3** Implement `emitCampaignProgress(campaignId, data)` — emit `campaign:progress`
-- [ ] **8.5.4** Implement `emitCampaignComplete(campaignId, summary)` — emit `campaign:complete`
+- [ ] **8.5.1** Create `src/dialer/dialer.gateway.ts` — `@WebSocketGateway({ namespace: '/ws', cors: true })`
+- [ ] **8.5.2** Implement `handleConnection(client)` — verify JWT, extract userId, join `user:{userId}` room
+- [ ] **8.5.3** On client subscribe to campaign: join `campaign:{campaignId}` room (via client-emitted `campaign:subscribe` event or REST-triggered server-side join)
+- [ ] **8.5.4** Implement `emitCampaignProgress(campaignId, data)` — emit `campaign:progress` to `campaign:{campaignId}` room
+- [ ] **8.5.5** Implement `emitCampaignComplete(campaignId, summary)` — emit `campaign:complete` to `campaign:{campaignId}` room
 
 **Refs:** SDD §6.1, API §WebSocket Events
 
 ### 8.6 — DNC List Management
 
-- [ ] **8.6.1** Create `POST /dnc` — manually add number to DNC
-- [ ] **8.6.2** Create `GET /dnc` — list DNC numbers
+- [ ] **8.6.1** Create `POST /dnc` — manually add phone number to DNC list (E.164 validated)
+- [ ] **8.6.2** Create `GET /dnc?page=1&limit=50` — list user's DNC numbers with source and date
 - [ ] **8.6.3** Create `DELETE /dnc/:id` — remove from DNC
-- [ ] **8.6.4** Integrate DNC check into campaign CSV validation
+- [ ] **8.6.4** Integrate DNC check into campaign CSV validation (8.2.1) and campaign creation (8.1.2)
+- [ ] **8.6.5** Auto-add to DNC on campaign opt-out: if contact replies STOP/UNSUBSCRIBE to campaign SMS, add to DNC with `source = 'campaign_opt_out'` (this is handled by messaging webhook, not dialer module)
 
 **Refs:** FR-PD-11, US-049
+
+### 8.7 — Dialer Module Assembly
+
+- [ ] **8.7.1** Create `src/dialer/dialer.module.ts` — imports: `PrismaModule`, `HttpModule` (Axios for Go HTTP calls), `EventEmitterModule`; provides: `DialerService`, `CsvValidator`; exports: `DialerService`
+- [ ] **8.7.2** Configure `HttpModule.registerAsync()` with `DIALER_SERVICE_URL` from config, timeout 30s, `Authorization: Bearer {INTERNAL_API_KEY}` default header
 
 ---
 
@@ -519,9 +753,9 @@
 
 - [ ] **14.1.1** Update `main.ts`: bootstrap with `NestFactory.create(AppModule)`
 - [ ] **14.1.2** Enable CORS with explicit allowlist from config (SR-04)
-- [ ] **14.1.3** Register global pipes, filters, interceptors from Phase 1
+- [ ] **14.1.3** Register global pipes, filters, interceptors, guards from Phase 1
 - [ ] **14.1.4** Set up Swagger/OpenAPI docs at `GET /api/v1/docs` (SRS §4.2)
-- [ ] **14.1.5** Set global prefix: `app.setGlobalPrefix('api/v1')` except webhook routes (SRS §4.2)
+- [ ] **14.1.5** Set global prefix: `app.setGlobalPrefix('api/v1', { exclude: ['webhooks/(.*)', 'internal/(.*)', 'health'] })` — webhook routes and internal callback routes must NOT have the `/api/v1` prefix (SRS §4.2, SDD §3.4)
 - [ ] **14.1.6** Listen on `PORT` env var (default 4000 per SDD §8.1)
 
 ### 14.2 — AppModule
@@ -530,7 +764,7 @@
   - `PrismaModule` (global)
   - `ConfigModule` (global)
   - `ThrottlerModule` (global)
-  - `ScheduleModule` (global, for cron)
+  - `ScheduleModule` (global, for cron jobs)
   - `EventEmitterModule` (global)
   - `TelephonyModule` (global — exports `TELEPHONY_PROVIDER`)
   - `AuthModule`
@@ -538,14 +772,15 @@
   - `MessagingModule`
   - `CallingModule`
   - `ContactsModule`
-  - `DialerModule`
+  - `DialerModule` — **proxies to Go Echo service** via `HttpModule` (Axios)
   - `BillingModule`
   - `TemplatesModule`
   - `ApiKeysModule`
   - `AuditModule`
   - `BullModule` (Redis-backed queues)
+- [ ] **14.2.2** `DialerModule` must import `HttpModule.registerAsync()` configured with `DIALER_SERVICE_URL` (default `http://dialer:8080`) and `INTERNAL_API_KEY` for service-to-service auth
 
-**Refs:** SDD §3.1
+**Refs:** SDD §3.1, SDD §4.4
 
 ---
 
@@ -558,9 +793,10 @@
 - [ ] **15.1.3** `MessagingService` — send SMS, quota check, scheduled message
 - [ ] **15.1.4** `CallingService` — token generation, CDR creation
 - [ ] **15.1.5** `TwilioProvider` — all methods with mocked Twilio SDK
-- [ ] **15.1.6** `DialerService` — CSV validation, DNC check
-- [ ] **15.1.7** `BillingService` — usage tracking, plan limits
-- [ ] **15.1.8** `UsageTrackerService` — 80% alert
+- [ ] **15.1.6** `DialerService` — campaign CRUD, CSV validation, DNC check, **Go service HTTP mock** (mock Axios responses for start/pause/resume/stop/export)
+- [ ] **15.1.7** `DialerCallbackController` — validates INTERNAL_API_KEY, rejects unauthorized, handles progress payload, emits WebSocket events
+- [ ] **15.1.8** `BillingService` — usage tracking, plan limits
+- [ ] **15.1.9** `UsageTrackerService` — 80% alert
 
 ### 15.2 — E2E Tests
 
@@ -572,19 +808,21 @@
 - [ ] **15.2.6** Inbound SMS webhook → message stored → WebSocket event
 - [ ] **15.2.7** Call token → inbound call webhook → CDR → hangup webhook
 - [ ] **15.2.8** Voicemail webhook → recording stored → transcription
-- [ ] **15.2.9** Campaign create → start → progress callback → pause → resume → export
-- [ ] **15.2.10** Stripe webhook → subscription activation → invoice generation
-- [ ] **15.2.11** Plan upgrade/downgrade flow
-- [ ] **15.2.12** API key create → authenticate → revoke
+- [ ] **15.2.9** Campaign create (CSV upload) → validation report → start (mock Go HTTP response) → receive progress callback → emit WebSocket → pause → resume → stop → export CSV
+- [ ] **15.2.10** Internal callback auth: reject missing INTERNAL_API_KEY, reject wrong key, accept correct key
+- [ ] **15.2.11** Stripe webhook → subscription activation → invoice generation
+- [ ] **15.2.12** Plan upgrade/downgrade flow
+- [ ] **15.2.13** API key create → authenticate → revoke
 
 ---
 
 ## Phase 16 — Docker & CI
 
-- [ ] **16.1** Create `backend/Dockerfile` — multi-stage build
-- [ ] **16.2** Wire into `docker-compose.yml` per SDD §8.1
-- [ ] **16.3** Add health check endpoint: `GET /health` returning `{ status: 'ok', db: 'connected', redis: 'connected' }`
-- [ ] **16.4** Seed default plans in migration
+- [ ] **16.1** Create `backend/Dockerfile` — multi-stage build (build → deps install → production)
+- [ ] **16.2** Wire into root `docker-compose.yml` per SDD §8.1 — NestJS API on port 4000
+- [ ] **16.3** Ensure `docker-compose.yml` includes the **Go dialer service** (see [dialer-tasks.md §13](roadmap/dialer-tasks.md) and SDD §8.1) — NestJS depends on `dialer` being healthy
+- [ ] **16.4** Add health check endpoint: `GET /health` returning `{ status: 'ok', db: 'connected', redis: 'connected', dialer: 'connected' }` — ping DB, Redis, AND Go dialer `/health`
+- [ ] **16.5** Seed default plans in Prisma migration/seed
 
 ---
 
@@ -593,25 +831,29 @@
 | Phase | Modules | # Tasks | Priority |
 |-------|---------|---------|----------|
 | 0 — Foundation | Dependencies, Config, Prisma | 18 | Blocker |
-| 1 — Common Layer | Filters, Interceptors, Pipes, Guards, Decorators | 10 | Blocker |
+| 1 — Common Layer | Filters, Interceptors, Pipes, Guards, Decorators, Middleware | 10 | Blocker |
 | 2 — Telephony PAL | Interface, TwilioProvider, Stubs, Status Maps | 21 | Blocker |
 | 3 — Auth Module | JWT, Registration, Login, OAuth, OTP, 2FA, Password Reset | 22 | Critical |
 | 4 — Numbers Module | Search, Provision, Release, Caching | 9 | Critical |
 | 5 — Messaging Module | Send SMS, Conversations, Webhooks, WebSocket Gateway | 14 | Critical |
 | 6 — Calling Module | WebRTC Token, Voice Webhooks, Voicemail, CDRs | 13 | Critical |
 | 7 — Contacts Module | CRUD, CSV Import, Auto-match | 9 | Medium |
-| 8 — Dialer Module | Campaign CRUD, CSV Validate, Go Proxy, WebSocket | 17 | High |
+| 8 — Dialer Module (NestJS Proxy) | Campaign CRUD, CSV Validate, Go HTTP Client, WebSocket, DNC | 26 | High |
 | 9 — Billing Module | Stripe, Usage Tracking, Invoices, Alerts | 14 | High |
 | 10 — Templates Module | CRUD, Variable Interpolation | 5 | Low |
 | 11 — API Keys Module | Generate, List, Revoke, Auth Guard | 6 | Low |
 | 12 — Audit Module | Log, Admin Endpoint | 4 | Low |
 | 13 — Scheduled Jobs | Grace Period, Alerts, Invoices, Retention, Cleanup | 6 | Medium |
-| 14 — Main & AppModule | Bootstrap, Swagger, CORS, Global Prefix | 6 | Blocker |
+| 14 — Main & AppModule | Bootstrap, Swagger, CORS, Global Prefix, Wire All Modules | 6 | Blocker |
 | 15 — Testing | 8 unit + 12 e2e | 20 | Per-phase |
 | 16 — Docker & CI | Dockerfile, Health Check, Compose | 4 | Deployment |
+| — | **Go Echo Dialer Service** (separate microservice) | **[~139 tasks](roadmap/dialer-tasks.md)** | **See dialer-tasks.md** |
 
-**Total: ~198 tasks**
+**NestJS Total: ~207 tasks**
+**Go Dialer Total: ~139 tasks (separate file)**
+**Grand Total: ~346 tasks**
 
 ---
 
 *Generated from SDD §3, SRS §3–8, PAL §1–12, URD Use Cases, API Reference*
+*Go Echo Dialer tasks: see [roadmap/dialer-tasks.md](roadmap/dialer-tasks.md)*
