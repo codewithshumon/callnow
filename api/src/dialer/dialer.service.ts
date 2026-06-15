@@ -66,6 +66,39 @@ export class DialerService {
       },
     });
 
+    // 8.1.2 — Bulk insert campaign_contacts from CSV
+    const csvString = csvBuffer.toString('utf-8');
+    const { parse } = require('csv-parse/sync');
+    const records = parse(csvString, {
+      columns: true,
+      skip_empty_lines: true,
+      trim: true,
+    });
+
+    const header = Object.keys(records[0] || {});
+    const phoneCol = header.find((h: string) =>
+      ['phone', 'phonenumber', 'number', 'mobile', 'tel'].includes(
+        h.toLowerCase(),
+      ),
+    ) || 'phone';
+    const e164Regex = /^\+[1-9]\d{1,14}$/;
+
+    const contacts = records
+      .filter((r: Record<string, string>) => {
+        const phone = r[phoneCol]?.trim();
+        return phone && e164Regex.test(phone) && !dncPhones.has(phone);
+      })
+      .map((r: Record<string, string>) => ({
+        campaignId: campaign.id,
+        phone: r[phoneCol].trim(),
+        name: r.name || null,
+        notes: r.notes || null,
+      }));
+
+    if (contacts.length > 0) {
+      await this.prisma.campaignContact.createMany({ data: contacts });
+    }
+
     return { campaign, validationReport };
   }
 
@@ -98,6 +131,17 @@ export class DialerService {
       where: { id: campaignId, userId },
     });
     if (!campaign) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Campaign not found' });
+
+    // Verify from_number is active and owned by user
+    const ownNumber = await this.prisma.phoneNumber.findFirst({
+      where: { number: campaign.fromNumber, userId, status: 'active' },
+    });
+    if (!ownNumber) {
+      throw new BadRequestException({
+        code: 'NUMBER_NOT_OWNED',
+        message: `You do not own the number ${campaign.fromNumber} or it is not active`,
+      });
+    }
 
     // Check plan permission
     const subscription = await this.prisma.subscription.findUnique({
