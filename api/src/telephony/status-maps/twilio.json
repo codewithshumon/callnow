@@ -1,0 +1,25 @@
+{
+  "message": {
+    "queued": "queued",
+    "sent": "sent",
+    "delivered": "delivered",
+    "undelivered": "failed",
+    "failed": "failed",
+    "accepted": "sent",
+    "sending": "sent",
+    "receiving": "sent",
+    "received": "delivered"
+  },
+  "call": {
+    "queued": "initiated",
+    "initiated": "initiated",
+    "ringing": "ringing",
+    "in-progress": "in-progress",
+    "answered": "in-progress",
+    "completed": "completed",
+    "busy": "busy",
+    "failed": "failed",
+    "no-answer": "no-answer",
+    "canceled": "failed"
+  }
+}

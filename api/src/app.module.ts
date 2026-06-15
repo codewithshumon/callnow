@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import { RedisThrottlerStorage } from './common/throttler/redis-throttler-storage.service';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
+import { TelephonyModule } from './telephony/telephony.module';
 import databaseConfig from './config/database.config';
 import redisConfig from './config/redis.config';
 import telephonyConfig from './config/telephony.config';
@@ -33,13 +34,16 @@ import Redis from 'ioredis';
               limit: 100,      // 100 requests per TTL for authenticated users (1.6.3)
             },
           ],
-          storage: new ThrottlerStorageRedisService(new Redis(redisUrl)),
+          storage: new RedisThrottlerStorage(new Redis(redisUrl)),
         };
       },
     }),
 
     // Database — Phase 0.3
     PrismaModule,
+
+    // Telephony Provider Abstraction Layer — Phase 2.5
+    TelephonyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

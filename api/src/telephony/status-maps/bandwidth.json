@@ -1,0 +1,17 @@
+{
+  "message": {
+    "QUEUED": "queued",
+    "SENDING": "sent",
+    "SENT": "sent",
+    "DELIVERED": "delivered",
+    "FAILED": "failed",
+    "DLR_EXPIRED": "failed",
+    "REJECTED": "failed"
+  },
+  "call": {
+    "initiated": "initiated",
+    "alerting": "ringing",
+    "answered": "in-progress",
+    "disconnected": "completed"
+  }
+}
