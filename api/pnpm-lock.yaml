@@ -101,6 +101,9 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
+      socket.io:
+        specifier: ^4.8.3
+        version: 4.8.3
       speakeasy:
         specifier: ^2.0.0
         version: 2.0.0
