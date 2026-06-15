@@ -10,6 +10,10 @@ import { TelephonyModule } from './telephony/telephony.module';
 import { AuthModule } from './auth/auth.module';
 import { NumbersModule } from './numbers/numbers.module';
 import { MessagingModule } from './messaging/messaging.module';
+import { CallingModule } from './calling/calling.module';
+import { ContactsModule } from './contacts/contacts.module';
+import { DialerModule } from './dialer/dialer.module';
+import { BillingModule } from './billing/billing.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import databaseConfig from './config/database.config';
 import redisConfig from './config/redis.config';
@@ -58,6 +62,18 @@ import Redis from 'ioredis';
 
     // Messaging — Phase 5
     MessagingModule,
+
+    // Calling — Phase 6
+    CallingModule,
+
+    // Contacts — Phase 7
+    ContactsModule,
+
+    // Dialer — Phase 8 (proxy to Go service)
+    DialerModule,
+
+    // Billing — Phase 9
+    BillingModule,
   ],
   controllers: [AppController],
   providers: [
