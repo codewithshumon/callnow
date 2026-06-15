@@ -14,6 +14,11 @@ import { CallingModule } from './calling/calling.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { DialerModule } from './dialer/dialer.module';
 import { BillingModule } from './billing/billing.module';
+import { TemplatesModule } from './templates/templates.module';
+import { ApiKeysModule } from './api-keys/api-keys.module';
+import { AuditModule } from './audit/audit.module';
+import { JobsModule } from './jobs/jobs.module';
+import { HealthModule } from './health/health.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import databaseConfig from './config/database.config';
 import redisConfig from './config/redis.config';
@@ -37,16 +42,14 @@ import Redis from 'ioredis';
       useFactory: (configService: ConfigService) => {
         const redisUrl = configService.get<string>('redis.url') || 'redis://localhost:6379';
         return {
-          throttlers: [
-            {
-              ttl: 60_000,
-              limit: 100,
-            },
-          ],
+          throttlers: [{ ttl: 60_000, limit: 100 }],
           storage: new RedisThrottlerStorage(new Redis(redisUrl)),
         };
       },
     }),
+
+    // Scheduled jobs — Phase 13
+    JobsModule,
 
     // Database — Phase 0.3
     PrismaModule,
@@ -69,16 +72,27 @@ import Redis from 'ioredis';
     // Contacts — Phase 7
     ContactsModule,
 
-    // Dialer — Phase 8 (proxy to Go service)
+    // Dialer — Phase 8 (proxy to Go)
     DialerModule,
 
     // Billing — Phase 9
     BillingModule,
+
+    // Templates — Phase 10
+    TemplatesModule,
+
+    // API Keys — Phase 11
+    ApiKeysModule,
+
+    // Audit — Phase 12
+    AuditModule,
+
+    // Health — Phase 16
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    // Global JWT guard (respects @Public() decorator)
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
