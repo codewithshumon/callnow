@@ -6,7 +6,8 @@ import type { ApiResponse, PaginatedResponse } from "@/lib/types";
 
 // ── Axios Instance ──────────────────────────────────────────
 
-const BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/v1`;
+// All API calls go through Next.js route handlers (/api/*) which proxy to NestJS
+const BASE_URL = "/api";
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,

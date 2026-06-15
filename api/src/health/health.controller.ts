@@ -33,11 +33,24 @@ export class HealthController {
       redisStatus = 'connected';
     } catch {}
 
+    let dialerStatus = 'not-checked';
+    try {
+      const dialerUrl =
+        process.env.DIALER_SERVICE_URL || 'http://localhost:8080';
+      const resp = await fetch(`${dialerUrl}/health`);
+      dialerStatus = resp.ok ? 'connected' : 'disconnected';
+    } catch {
+      dialerStatus = 'disconnected';
+    }
+
     return {
-      status: dbStatus === 'connected' && redisStatus === 'connected' ? 'ok' : 'degraded',
+      status:
+        dbStatus === 'connected' && redisStatus === 'connected'
+          ? 'ok'
+          : 'degraded',
       db: dbStatus,
       redis: redisStatus,
-      dialer: 'not-checked', // Go dialer not available in dev
+      dialer: dialerStatus,
     };
   }
 }

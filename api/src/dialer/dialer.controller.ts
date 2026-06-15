@@ -2,6 +2,8 @@ import {
   Controller,
   Get,
   Post,
+  Put,
+  Delete,
   Param,
   Body,
   Query,
@@ -130,7 +132,7 @@ export class DialerController {
     return this.dialerService.listDnc(userId, query.page, query.limit);
   }
 
-  @Post('dnc/:id')
+  @Delete('dnc/:id')
   async removeDnc(
     @CurrentUser('id') userId: string,
     @Param('id') id: string,

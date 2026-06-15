@@ -26,6 +26,7 @@ export class ScheduledMessageJob {
         scheduledAt: { lte: now },
         status: 'queued',
         direction: 'outbound',
+        body: { not: null },
       },
       take: 100,
     });

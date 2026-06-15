@@ -109,6 +109,38 @@ export class SmsWebhookController {
     // Emit WebSocket event
     this.eventEmitter.emit('message:new', { userId: ownerId, message });
 
+    // 8.6.5 — Auto-add to DNC on campaign opt-out (STOP/UNSUBSCRIBE)
+    const upperBody = normalized.body.toUpperCase().trim();
+    if (
+      upperBody === 'STOP' ||
+      upperBody === 'UNSUBSCRIBE' ||
+      upperBody === 'CANCEL' ||
+      upperBody === 'END' ||
+      upperBody === 'QUIT'
+    ) {
+      try {
+        await this.prisma.dncEntry.upsert({
+          where: {
+            userId_phone: { userId: ownerId, phone: normalized.from },
+          },
+          create: {
+            userId: ownerId,
+            phone: normalized.from,
+            source: 'campaign_opt_out',
+            reason: `Opted out via SMS: ${normalized.body}`,
+          },
+          update: {
+            source: 'campaign_opt_out',
+          },
+        });
+        this.logger.log(
+          `Auto-DNC: ${normalized.from} for user ${ownerId} via campaign opt-out`,
+        );
+      } catch (error) {
+        this.logger.error('Failed to auto-add DNC entry', error);
+      }
+    }
+
     return this.telephonyProvider.generateCallControlResponse({
       type: 'empty',
     });

@@ -1,0 +1,83 @@
+services:
+  # PostgreSQL 15 — Primary data store
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: voicelink
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 7 — Cache, queues, WebSocket state, rate limiting
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # NestJS API — Business logic, auth, orchestration
+  api:
+    build: ./api
+    ports:
+      - '4000:4000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - PORT=4000
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/voicelink
+      - REDIS_URL=redis://redis:6379
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET:-change-me-access-secret}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-change-me-refresh-secret}
+      - TELEPHONY_PROVIDER=${TELEPHONY_PROVIDER:-twilio}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_API_KEY=${TWILIO_API_KEY}
+      - TWILIO_API_SECRET=${TWILIO_API_SECRET}
+      - DIALER_SERVICE_URL=http://dialer:8080
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY:-change-me-internal-key}
+      - CORS_ORIGIN=http://localhost:3000
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+    restart: unless-stopped
+
+  # Go Echo Dialer Service — Power dialer engine (see roadmap/dialer-tasks.md)
+  dialer:
+    build: ./dialer-service
+    ports:
+      - '8080:8080'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - PORT=8080
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/voicelink
+      - REDIS_URL=redis://redis:6379
+      - TELEPHONY_PROVIDER=${TELEPHONY_PROVIDER:-twilio}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - NESTJS_CALLBACK_URL=http://api:4000
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY:-change-me-internal-key}
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
