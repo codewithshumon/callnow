@@ -113,8 +113,14 @@ export class VoiceWebhookController {
     if (normalized.status === 'completed') {
       updates.endedAt = new Date();
       if (call.startedAt) {
-        updates.durationSeconds = Math.round(
+        const duration = Math.round(
           (Date.now() - call.startedAt.getTime()) / 1000,
+        );
+        updates.durationSeconds = duration;
+        // Calculate cost — $0.013/min outbound, $0.0085/min inbound (approx)
+        const ratePerMinute = call.direction === 'outbound' ? 0.013 : 0.0085;
+        updates.cost = parseFloat(
+          ((duration / 60) * ratePerMinute).toFixed(6),
         );
       }
     }
@@ -123,6 +129,33 @@ export class VoiceWebhookController {
       where: { id: call.id },
       data: updates as Parameters<typeof this.prisma.call.update>[0]['data'],
     });
+
+    // If no-answer or failed, check for voicemail (provider may have sent RecordingUrl)
+    if (
+      normalized.status === 'no-answer' ||
+      normalized.status === 'failed' ||
+      normalized.status === 'busy'
+    ) {
+      const body = req.body as Record<string, unknown>;
+      const recordingUrl = body.RecordingUrl as string | undefined;
+      if (recordingUrl) {
+        await this.prisma.voicemail.create({
+          data: {
+            callId: call.id,
+            userId: call.userId || 'unknown',
+            fromNumber: call.fromNumber,
+            recordingUrl,
+            durationSeconds: parseInt(
+              (body.RecordingDuration as string) || '0',
+              10,
+            ),
+          },
+        });
+        this.logger.log(
+          `Voicemail from ${normalized.status} call ${call.id}`,
+        );
+      }
+    }
 
     this.eventEmitter.emit('call:status', {
       userId: call.userId,

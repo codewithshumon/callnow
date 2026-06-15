@@ -22,15 +22,15 @@ export class UsageTrackerService {
       where: { id: record.id },
       data: { minutesUsed: { increment: minutes } },
     });
-    await this.checkLimits(userId);
+    await this.checkAndAlert(userId);
   }
 
   async incrementNumbersHeld(userId: string) {
     await this.increment(userId, 'numbersHeld');
   }
 
-  // 9.4.3 — Check plan limits before operation
-  async checkLimits(userId: string) {
+  // 9.4.3 — Check plan limits before operation, throw if exceeded
+  async checkLimit(userId: string, resource: 'sms' | 'minutes' | 'numbers'): Promise<void> {
     const subscription = await this.prisma.subscription.findUnique({
       where: { userId },
       include: { plan: true },
@@ -40,17 +40,45 @@ export class UsageTrackerService {
     const usage = await this.getOrCreateRecord(userId);
     const plan = subscription.plan;
 
-    // Check limits
+    if (resource === 'sms' && plan.includedSms > 0 && usage.smsSent >= plan.includedSms) {
+      throw new BadRequestException({
+        code: 'PLAN_LIMIT_EXCEEDED',
+        message: `SMS limit reached (${usage.smsSent}/${plan.includedSms})`,
+      });
+    }
+
+    if (resource === 'minutes' && plan.includedMinutes > 0 && usage.minutesUsed >= plan.includedMinutes) {
+      throw new BadRequestException({
+        code: 'PLAN_LIMIT_EXCEEDED',
+        message: `Minutes limit reached (${usage.minutesUsed}/${plan.includedMinutes})`,
+      });
+    }
+  }
+
+  // Internal: check and alert at thresholds
+  private async checkAndAlert(userId: string) {
+    const subscription = await this.prisma.subscription.findUnique({
+      where: { userId },
+      include: { plan: true },
+    });
+    if (!subscription?.plan) return;
+
+    const usage = await this.getOrCreateRecord(userId);
+    const plan = subscription.plan;
+
     if (usage.smsSent >= plan.includedSms && plan.includedSms > 0) {
-      // Alert at 100%
-      this.logger.warn(`User ${userId} reached SMS limit`);
+      this.logger.warn(`User ${userId} reached 100% SMS limit`);
     }
     if (usage.minutesUsed >= plan.includedMinutes * 0.8 && plan.includedMinutes > 0) {
-      // Alert at 80%
       this.logger.warn(
         `User ${userId} at 80% minute usage (${usage.minutesUsed}/${plan.includedMinutes})`,
       );
     }
+  }
+
+  // Legacy alias
+  async checkLimits(userId: string) {
+    return this.checkAndAlert(userId);
   }
 
   // 9.4.5 — Daily cron: check all users approaching limit
@@ -85,7 +113,7 @@ export class UsageTrackerService {
       where: { id: record.id },
       data: { [field]: { increment: 1 } },
     });
-    await this.checkLimits(userId);
+    await this.checkAndAlert(userId);
   }
 
   private async getOrCreateRecord(userId: string) {
