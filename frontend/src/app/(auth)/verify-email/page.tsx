@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, Suspense } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,25 +13,37 @@ function VerifyContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
-  const [state, setState] = useState<State>("verifying");
-  const [errorMsg, setErrorMsg] = useState("");
+  const calledRef = useRef(false);
 
-  const verify = useCallback(async (t: string) => {
-    setState("verifying");
-    try {
-      await post("/auth/verify-email", { token: t });
-      setState("success");
-      setTimeout(() => router.push("/login"), 3000);
-    } catch (err) {
-      setState("error");
-      setErrorMsg(extractApiError(err).message);
-    }
-  }, [router]);
+  const [state, setState] = useState<State>(
+    token ? "verifying" : "error",
+  );
+  const [errorMsg, setErrorMsg] = useState(
+    token ? "" : "No verification token provided.",
+  );
 
   useEffect(() => {
-    if (token) verify(token);
-    else { setState("error"); setErrorMsg("No verification token provided."); }
-  }, [token, verify]);
+    if (!token || calledRef.current) return;
+    calledRef.current = true;
+
+    let cancelled = false;
+
+    async function doVerify() {
+      try {
+        await post("/auth/verify-email", { token: token! });
+        if (cancelled) return;
+        setState("success");
+        setTimeout(() => router.push("/login"), 3000);
+      } catch (err) {
+        if (cancelled) return;
+        setState("error");
+        setErrorMsg(extractApiError(err).message);
+      }
+    }
+
+    doVerify();
+    return () => { cancelled = true; };
+  }, [token, router]);
 
   async function handleResend() {
     try {

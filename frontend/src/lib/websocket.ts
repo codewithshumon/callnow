@@ -42,8 +42,7 @@ export function connectWebSocket(): Socket {
     throw new Error("Cannot connect WebSocket: not authenticated");
   }
 
-  socket = io(WS_URL, {
-    path: "/ws",
+  socket = io(`${WS_URL}/ws`, {
     auth: { token },
     transports: ["websocket", "polling"],
     reconnection: true,
