@@ -12,7 +12,7 @@ const mockPrisma = {
   phoneNumber: { findFirst: jest.fn() },
 };
 const mockNumbers = { getUserByNumber: jest.fn().mockResolvedValue(null) };
-const mockConfig = { get: jest.fn().mockReturnValue('redis://localhost:6379') };
+const mockConfig = { get: jest.fn().mockReturnValue('redis://localhost:6381') };
 const mockEventEmitter = { emit: jest.fn() };
 const mockProvider = {
   name: 'twilio',
