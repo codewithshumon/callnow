@@ -8,7 +8,7 @@ const mockPrisma = {
   call: { findMany: jest.fn(), count: jest.fn(), create: jest.fn(), findUnique: jest.fn() },
   voicemail: { findMany: jest.fn(), findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
 };
-const mockConfig = { get: jest.fn().mockReturnValue('redis://localhost:6381') };
+const mockConfig = { get: jest.fn().mockReturnValue('redis://localhost:6383') };
 const mockProvider = {
   name: 'twilio',
   generateClientToken: jest.fn().mockResolvedValue({ token: 'mock-token', expiresIn: 3300 }),

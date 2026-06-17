@@ -11,7 +11,7 @@ const mockPrisma = {
   },
   subscription: { findUnique: jest.fn() },
 };
-const mockConfig = { get: jest.fn().mockReturnValue('redis://localhost:6381') };
+const mockConfig = { get: jest.fn().mockReturnValue('redis://localhost:6383') };
 const mockProvider = {
   name: 'twilio',
   searchAvailableNumbers: jest.fn().mockResolvedValue([]),

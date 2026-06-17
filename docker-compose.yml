@@ -22,7 +22,7 @@ services:
     container_name: callnow-redis
     image: redis:7-alpine
     ports:
-      - '6381:6379'
+      - '6383:6379'
     volumes:
       - redisdata:/data
     healthcheck:

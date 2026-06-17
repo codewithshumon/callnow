@@ -19,7 +19,7 @@ export class CallingService {
     configService: ConfigService,
   ) {
     this.redis = new Redis(
-      configService.get<string>('redis.url') || 'redis://localhost:6381',
+      configService.get<string>('redis.url') || 'redis://localhost:6383',
     );
   }
 

@@ -41,7 +41,7 @@ import Redis from 'ioredis';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const redisUrl = configService.get<string>('redis.url') || 'redis://localhost:6381';
+        const redisUrl = configService.get<string>('redis.url') || 'redis://localhost:6383';
         return {
           throttlers: [{ ttl: 60_000, limit: 100 }],
           storage: new RedisThrottlerStorage(new Redis(redisUrl)),
@@ -55,7 +55,7 @@ import Redis from 'ioredis';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         connection: {
-          url: configService.get<string>('redis.url') || 'redis://localhost:6381',
+          url: configService.get<string>('redis.url') || 'redis://localhost:6383',
         },
       }),
     }),
