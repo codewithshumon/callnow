@@ -22,24 +22,28 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const webrtcInitialized = useRef(false);
 
   // ── Auth guard ──────────────────────────────────────────
-  // On mount: if user is restored from localStorage but tokens are missing
-  // (fresh page load), try refreshing via the refresh_token cookie.
+  // On mount with no in-memory tokens, try refreshing via cookie.
+  // If it fails, redirect to login.
   useEffect(() => {
     if (isLoading) return;
 
-    if (!accessToken && user && !hasTriedRefresh.current) {
+    if (!accessToken && !hasTriedRefresh.current) {
       hasTriedRefresh.current = true;
-      refreshSession().catch(() => {
-        useAuthStore.getState().logout();
-        router.push("/login");
-      });
+      refreshSession()
+        .then(() => {
+          // success — tokens are set, dashboard renders on next tick
+        })
+        .catch(() => {
+          useAuthStore.getState().logout();
+          router.replace("/login");
+        });
       return;
     }
 
-    if (!user) {
-      router.push("/login");
+    if (!user && !isLoading) {
+      router.replace("/login");
     }
-  }, [user, accessToken, isLoading, refreshSession, router]);
+  }, [user, accessToken, isLoading]);
 
   // ── WebSocket connection ────────────────────────────────
   useEffect(() => {

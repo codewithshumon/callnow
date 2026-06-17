@@ -87,31 +87,32 @@ export async function proxyToBackend(
   // Tokens stay in the response body too — the frontend uses
   // in-memory copies for UI state (isAuthenticated, etc.).
   const isAuthEndpoint = AUTH_ENDPOINTS.some((ep) => path.startsWith(ep));
+  const setCookieHeaders: string[] = [];
 
   if (isAuthEndpoint && data?.data) {
     if (data.data.accessToken) {
-      cookieStore.set("access_token", data.data.accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: ACCESS_TTL,
-        path: "/",
-      });
+      setCookieHeaders.push(
+        `access_token=${data.data.accessToken}; HttpOnly; SameSite=Lax; Max-Age=${ACCESS_TTL}; Path=/`,
+      );
     }
     if (data.data.refreshToken) {
-      cookieStore.set("refresh_token", data.data.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: REFRESH_TTL,
-        path: "/",
-      });
+      setCookieHeaders.push(
+        `refresh_token=${data.data.refreshToken}; HttpOnly; SameSite=Lax; Max-Age=${REFRESH_TTL}; Path=/`,
+      );
     }
+  }
+
+  // Use array form to support multiple Set-Cookie headers
+  const responseHeaders: [string, string][] = [
+    ["Content-Type", "application/json"],
+  ];
+  for (const c of setCookieHeaders) {
+    responseHeaders.push(["Set-Cookie", c]);
   }
 
   return new Response(JSON.stringify(data), {
     status: res.status,
-    headers: { "Content-Type": "application/json" },
+    headers: responseHeaders,
   });
 }
 

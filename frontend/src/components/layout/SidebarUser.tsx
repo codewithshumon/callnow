@@ -6,12 +6,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/store/authStore";
+import { cn } from "@/lib/utils";
 
 export default function SidebarUser({ collapsed }: { collapsed?: boolean }) {
   const router = useRouter();
@@ -45,9 +47,11 @@ export default function SidebarUser({ collapsed }: { collapsed?: boolean }) {
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="top" className="w-56">
-        <DropdownMenuLabel>
-          <p className="text-sm font-medium">{user?.email}</p>
-        </DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>
+            <p className="text-sm font-medium">{user?.email}</p>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => router.push("/settings")}>
           <UserIcon className="mr-2 h-4 w-4" />
@@ -62,5 +66,3 @@ export default function SidebarUser({ collapsed }: { collapsed?: boolean }) {
     </DropdownMenu>
   );
 }
-
-import { cn } from "@/lib/utils";
