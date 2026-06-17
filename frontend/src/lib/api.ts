@@ -6,34 +6,20 @@ import type { ApiResponse, PaginatedResponse } from "@/lib/types";
 
 // ── Axios Instance ──────────────────────────────────────────
 
-// All API calls go through Next.js route handlers (/api/*) which proxy to NestJS
+// All API calls go through Next.js route handlers (/api/*).
+// proxy.ts reads the access_token cookie and sets the Authorization header.
+// No manual Authorization header management needed.
+
 const BASE_URL = "/api";
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
   timeout: 15000,
 });
 
-// ── Request Interceptor — attach JWT token ──────────────────
-
-apiClient.interceptors.request.use(
-  (config) => {
-    // Only in browser (not during SSR)
-    if (typeof window !== "undefined") {
-      const token = useAuthStore.getState().accessToken;
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
 // ── Response Interceptor — handle 401 with token refresh ────
+// The refresh_token cookie is sent automatically; proxy.ts forwards it.
 
 let isRefreshing = false;
 let failedQueue: Array<{
@@ -54,14 +40,13 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config;
 
-    // Only attempt refresh on 401 and not already retried
     if (
       error.response?.status === 401 &&
       originalRequest &&
       !(originalRequest as any)._retry
     ) {
-      // Don't refresh if the request was to auth endpoints
       const url = originalRequest.url || "";
+      // Don't refresh if already calling auth endpoints
       if (
         url.includes("/auth/login") ||
         url.includes("/auth/register") ||
@@ -71,61 +56,37 @@ apiClient.interceptors.response.use(
       }
 
       if (isRefreshing) {
-        // Queue this request until refresh completes
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
-        }).then(() => {
-          const token = useAuthStore.getState().accessToken;
-          if (token && originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-          }
-          return apiClient(originalRequest);
-        });
+        }).then(() => apiClient(originalRequest));
       }
 
       isRefreshing = true;
       (originalRequest as any)._retry = true;
 
       try {
-        const refreshToken = useAuthStore.getState().refreshToken;
-        if (!refreshToken) {
-          throw new Error("No refresh token available");
-        }
+        // refresh_token cookie is sent automatically
+        await axios.post(`${BASE_URL}/auth/refresh`, {});
 
-        const response = await axios.post(`${BASE_URL}/auth/refresh`, {
-          refreshToken,
-        });
-
-        const { accessToken, refreshToken: newRefreshToken, expiresIn } =
-          response.data.data;
-
-        useAuthStore.getState().setTokens({
-          accessToken,
-          refreshToken: newRefreshToken || refreshToken,
-          expiresIn,
-        });
-
+        // Update in-memory tokens if returned
+        const store = useAuthStore.getState();
+        // Try to read updated user from a quick profile call, or just update tokens
         processQueue();
-
-        if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        }
         return apiClient(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError);
-        // Clear auth and redirect to login
+      } catch {
+        processQueue(new Error("Refresh failed"));
         useAuthStore.getState().logout();
         if (typeof window !== "undefined") {
           window.location.href = "/login";
         }
-        return Promise.reject(refreshError);
+        return Promise.reject(new Error("Session expired"));
       } finally {
         isRefreshing = false;
       }
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 // ── Type-safe API helpers ───────────────────────────────────
@@ -137,7 +98,7 @@ export async function get<T>(url: string, params?: Record<string, unknown>) {
 
 export async function getPaginated<T>(
   url: string,
-  params?: Record<string, unknown>
+  params?: Record<string, unknown>,
 ) {
   const response = await apiClient.get<PaginatedResponse<T>>(url, { params });
   return response.data;
@@ -173,7 +134,7 @@ export async function del<T>(url: string) {
 // ── API Error Extractor ─────────────────────────────────────
 
 export function extractApiError(
-  error: unknown
+  error: unknown,
 ): { code: string; message: string; field?: string } {
   if (axios.isAxiosError(error) && error.response?.data?.error) {
     return error.response.data.error;

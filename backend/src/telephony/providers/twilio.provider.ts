@@ -3,9 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import Twilio from 'twilio';
 import { twiml as TwilioTwiml } from 'twilio';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { AccessToken } = require('twilio/lib/jwt/AccessToken');
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { VoiceGrant } = require('twilio/lib/jwt/AccessToken');
+const AccessToken = require('twilio/lib/jwt/AccessToken');
+const VoiceGrant = AccessToken.VoiceGrant;
 
 import type {
   TelephonyProvider,

@@ -12,25 +12,35 @@ import {
 import { useAuthStore } from "@/store/authStore";
 
 export function useWebSocket() {
-  const accessToken = useAuthStore((s) => s.accessToken);
+  const user = useAuthStore((s) => s.user);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    if (!accessToken) return;
-    try {
-      connectWebSocket();
-      setConnected(true);
-    } catch {
-      setConnected(false);
+    if (!user) return;
+    let cancelled = false;
+
+    async function init() {
+      try {
+        await connectWebSocket();
+        if (!cancelled) setConnected(true);
+      } catch {
+        if (!cancelled) setConnected(false);
+      }
     }
-    // Poll connection status
-    const interval = setInterval(() => setConnected(isConnected()), 5000);
+
+    init();
+
+    const interval = setInterval(() => {
+      if (!cancelled) setConnected(isConnected());
+    }, 5000);
+
     return () => {
+      cancelled = true;
       clearInterval(interval);
       disconnectWebSocket();
       setConnected(false);
     };
-  }, [accessToken]);
+  }, [user]);
 
   return {
     isConnected: connected,

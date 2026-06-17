@@ -1,9 +1,9 @@
-import { proxyToBackend, getAuthToken } from "@/lib/proxy";
+import { proxyToBackend } from "@/lib/proxy";
 
-export async function POST(request: Request) {
-  return proxyToBackend("/calls/token", {
-    method: "POST",
-    body: {},
-    headers: { Authorization: `Bearer ${getAuthToken(request)}` },
-  });
+export async function GET() {
+  return proxyToBackend("/calls/token", { method: "GET" });
+}
+
+export async function POST() {
+  return proxyToBackend("/calls/token", { method: "POST", body: {} });
 }

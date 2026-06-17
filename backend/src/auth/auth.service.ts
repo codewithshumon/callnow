@@ -517,6 +517,7 @@ export class AuthService {
     });
 
     return {
+      user: { id: userId, email, role },
       accessToken,
       refreshToken,
       expiresIn: 900, // 15 min in seconds

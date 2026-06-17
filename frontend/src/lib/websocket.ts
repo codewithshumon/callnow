@@ -32,12 +32,27 @@ type EventCallbackMap = {
   "campaign:complete": (data: WsCampaignCompleteEvent["data"]) => void;
 };
 
+// ── Fetch WS token ──────────────────────────────────────────
+// httpOnly cookies can't be read by JS, so we call the server-side
+// endpoint which reads the cookie and returns a short-lived JWT.
+
+async function fetchWsToken(): Promise<string | null> {
+  try {
+    const res = await fetch("/api/auth/ws-token", { method: "POST" });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.data?.token ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ── Connect ─────────────────────────────────────────────────
 
-export function connectWebSocket(): Socket {
+export async function connectWebSocket(): Promise<Socket> {
   if (socket?.connected) return socket;
 
-  const token = useAuthStore.getState().accessToken;
+  const token = await fetchWsToken();
   if (!token) {
     throw new Error("Cannot connect WebSocket: not authenticated");
   }
@@ -60,8 +75,6 @@ export function connectWebSocket(): Socket {
     console.debug("[WS] Disconnected:", reason);
   });
 
-  // ── Reconnection with exponential backoff ─────────────────
-
   socket.io.on("reconnect_attempt", (attempt) => {
     reconnectAttempts = attempt;
     const delay = Math.min(1000 * Math.pow(2, attempt), 30000);
@@ -70,7 +83,6 @@ export function connectWebSocket(): Socket {
 
   socket.io.on("reconnect_failed", () => {
     console.error("[WS] Max reconnect attempts reached");
-    // Could show a persistent "Connection lost" banner here
   });
 
   socket.on("connect_error", (error) => {
@@ -78,7 +90,6 @@ export function connectWebSocket(): Socket {
   });
 
   // ── Built-in store bindings ───────────────────────────────
-  // These auto-update stores when events arrive
 
   socket.on("message:new", (data: WsMessageNewEvent["data"]) => {
     const store = useMessageStore.getState();
@@ -108,20 +119,8 @@ export function connectWebSocket(): Socket {
     }
   });
 
-  socket.on(
-    "campaign:progress",
-    (data: WsCampaignProgressEvent["data"]) => {
-      // Campaign progress is consumed by the campaign live page hook;
-      // this default handler is a no-op (the hook subscribes via addEventListener)
-    }
-  );
-
-  socket.on(
-    "campaign:complete",
-    (data: WsCampaignCompleteEvent["data"]) => {
-      // Same — consumed by the campaign live page hook
-    }
-  );
+  socket.on("campaign:progress", (_data: WsCampaignProgressEvent["data"]) => {});
+  socket.on("campaign:complete", (_data: WsCampaignCompleteEvent["data"]) => {});
 
   return socket;
 }
@@ -156,7 +155,7 @@ export function leaveCampaignRoom(campaignId: string): void {
 
 export function onWsEvent<K extends keyof EventCallbackMap>(
   event: K,
-  callback: EventCallbackMap[K]
+  callback: EventCallbackMap[K],
 ): () => void {
   socket?.on(event as string, callback as (...args: any[]) => void);
   return () => {

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, HttpCode, BadRequestException } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -13,10 +13,16 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import type { JwtUser } from '../common/decorators/current-user.decorator';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {}
 
   // 3.3.1 — Auth endpoints per API.md §Authentication
   // Rate limiting on login/register per 3.3.2
@@ -40,13 +46,19 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(200)
   async refresh(@Body() dto: RefreshDto) {
+    if (!dto.refreshToken) {
+      throw new BadRequestException({ code: 'NO_TOKEN', message: 'No refresh token' });
+    }
     return this.authService.refresh(dto.refreshToken);
   }
 
   @Post('logout')
   @HttpCode(200)
   async logout(@Body() dto: RefreshDto, @CurrentUser() user: JwtUser) {
-    return this.authService.logout(dto.refreshToken);
+    if (dto.refreshToken) {
+      return this.authService.logout(dto.refreshToken);
+    }
+    return { message: 'Logged out' };
   }
 
   @Public()
@@ -95,5 +107,16 @@ export class AuthController {
   @HttpCode(200)
   async verify2fa(@Body() dto: Verify2faDto) {
     return this.authService.verify2fa(dto);
+  }
+
+  // WebSocket auth — returns short-lived JWT for Socket.IO
+  @Post('ws-token')
+  @UseGuards(JwtAuthGuard)
+  async getWsToken(@CurrentUser() user: JwtUser) {
+    const wsToken = this.jwtService.sign(
+      { sub: user.id, email: user.email, role: user.role },
+      { expiresIn: '5m', secret: this.configService.get<string>('jwt.accessSecret') },
+    );
+    return { token: wsToken, expiresIn: 300 };
   }
 }

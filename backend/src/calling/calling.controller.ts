@@ -21,7 +21,12 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 export class CallingController {
   constructor(private readonly callingService: CallingService) {}
 
-  // 6.1.2
+  // 6.1.2 — WebRTC client token
+  @Get('calls/token')
+  async getCallTokenGet(@CurrentUser('id') userId: string) {
+    return this.callingService.getCallToken(userId);
+  }
+
   @Post('calls/token')
   async getCallToken(@CurrentUser('id') userId: string) {
     return this.callingService.getCallToken(userId);
