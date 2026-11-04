@@ -7,9 +7,11 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Public } from '../../common/decorators/public.decorator';
 import { DialerService } from '../dialer.service';
 
 @Controller('internal/dialer')
+@Public()
 export class DialerCallbackController {
   private readonly logger = new Logger(DialerCallbackController.name);
   private readonly internalApiKey: string;

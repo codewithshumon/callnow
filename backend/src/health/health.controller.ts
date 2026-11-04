@@ -1,21 +1,14 @@
 import { Controller, Get } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import Redis from 'ioredis';
-import { ConfigService } from '@nestjs/config';
+import { RedisService } from '../redis/redis.service';
 import { Public } from '../common/decorators/public.decorator';
 
 @Controller('health')
 export class HealthController {
-  private readonly redis: Redis;
-
   constructor(
     private readonly prisma: PrismaService,
-    configService: ConfigService,
-  ) {
-    this.redis = new Redis(
-      configService.get<string>('redis.url') || 'redis://localhost:6383',
-    );
-  }
+    private readonly redis: RedisService,
+  ) {}
 
   @Get()
   @Public()

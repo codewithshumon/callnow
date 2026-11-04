@@ -12,9 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
 @WebSocketGateway({ namespace: '/ws', cors: true })
-export class DialerGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+export class DialerGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -27,9 +25,12 @@ export class DialerGateway
 
   // 8.5.2 — Verify JWT on connect (skips if already authenticated by MessagingGateway)
   async handleConnection(client: Socket) {
-    const existingUserId = (client as unknown as Record<string, unknown>).userId;
+    const existingUserId = (client as unknown as Record<string, unknown>)
+      .userId;
     if (existingUserId) {
-      this.logger.log(`Dialer WS: user ${existingUserId} already authenticated`);
+      this.logger.log(
+        `Dialer WS: user ${existingUserId} already authenticated`,
+      );
       return;
     }
 
@@ -69,6 +70,7 @@ export class DialerGateway
 
   // 8.5.3 — Client subscribes to campaign room
   @SubscribeMessage('campaign:subscribe')
+  @SubscribeMessage('join-campaign')
   handleCampaignSubscribe(client: Socket, payload: { campaignId: string }) {
     if (payload?.campaignId) {
       client.join(`campaign:${payload.campaignId}`);

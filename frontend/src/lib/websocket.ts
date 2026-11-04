@@ -144,10 +144,12 @@ export function getSocket(): Socket | null {
 // ── Room management ─────────────────────────────────────────
 
 export function joinCampaignRoom(campaignId: string): void {
+  socket?.emit("campaign:subscribe", { campaignId });
   socket?.emit("join-campaign", { campaignId });
 }
 
 export function leaveCampaignRoom(campaignId: string): void {
+  socket?.emit("campaign:unsubscribe", { campaignId });
   socket?.emit("leave-campaign", { campaignId });
 }
 

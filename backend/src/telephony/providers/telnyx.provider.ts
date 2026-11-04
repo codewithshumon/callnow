@@ -40,9 +40,7 @@ export class TelnyxProvider implements TelephonyProvider {
   async searchAvailableNumbers(
     _params: NumberSearchParams,
   ): Promise<AvailableNumber[]> {
-    throw new NotImplementedException(
-      'TelnyxProvider.searchAvailableNumbers',
-    );
+    throw new NotImplementedException('TelnyxProvider.searchAvailableNumbers');
   }
 
   async provisionNumber(
@@ -60,9 +58,7 @@ export class TelnyxProvider implements TelephonyProvider {
     _providerSid: string,
     _webhookConfig: WebhookConfig,
   ): Promise<void> {
-    throw new NotImplementedException(
-      'TelnyxProvider.configureNumberWebhooks',
-    );
+    throw new NotImplementedException('TelnyxProvider.configureNumberWebhooks');
   }
 
   async sendMessage(
@@ -104,9 +100,7 @@ export class TelnyxProvider implements TelephonyProvider {
   }
 
   parseInboundCallWebhook(_req: RawWebhookRequest): NormalizedInboundCall {
-    throw new NotImplementedException(
-      'TelnyxProvider.parseInboundCallWebhook',
-    );
+    throw new NotImplementedException('TelnyxProvider.parseInboundCallWebhook');
   }
 
   parseStatusCallback(_req: RawWebhookRequest): NormalizedStatusEvent {

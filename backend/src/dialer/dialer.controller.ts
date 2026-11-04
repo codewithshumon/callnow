@@ -133,10 +133,7 @@ export class DialerController {
   }
 
   @Delete('dnc/:id')
-  async removeDnc(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-  ) {
+  async removeDnc(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.dialerService.removeDnc(userId, id);
   }
 }

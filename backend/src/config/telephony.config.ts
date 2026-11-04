@@ -9,6 +9,7 @@ export default registerAs('telephony', () => ({
     authToken: process.env.TWILIO_AUTH_TOKEN || '',
     apiKey: process.env.TWILIO_API_KEY || '',
     apiSecret: process.env.TWILIO_API_SECRET || '',
+    twimlAppSid: process.env.TWILIO_TWIML_APP_SID || '',
   },
 
   // Vonage (stub in v1)

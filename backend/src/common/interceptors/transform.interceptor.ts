@@ -20,7 +20,10 @@ import { map } from 'rxjs/operators';
  */
 @Injectable()
 export class TransformInterceptor<T> implements NestInterceptor<T, unknown> {
-  intercept(_context: ExecutionContext, next: CallHandler<T>): Observable<unknown> {
+  intercept(
+    _context: ExecutionContext,
+    next: CallHandler<T>,
+  ): Observable<unknown> {
     return next.handle().pipe(
       map((responseData) => {
         // Pass through undefined/void responses (e.g., 204 No Content)
@@ -29,7 +32,11 @@ export class TransformInterceptor<T> implements NestInterceptor<T, unknown> {
         }
 
         // If response already has { success: ... }, pass through
-        if (typeof responseData === 'object' && responseData !== null && 'success' in responseData) {
+        if (
+          typeof responseData === 'object' &&
+          responseData !== null &&
+          'success' in responseData
+        ) {
           return responseData;
         }
 

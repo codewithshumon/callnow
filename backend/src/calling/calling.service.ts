@@ -2,26 +2,20 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { TelephonyProvider } from '../telephony/interfaces/telephony-provider.interface';
 import { TELEPHONY_PROVIDER } from '../telephony/telephony.module';
-import Redis from 'ioredis';
-import { ConfigService } from '@nestjs/config';
+import { RedisService } from '../redis/redis.service';
 
 const CALL_TOKEN_TTL = 55 * 60; // SDD §9: 55 minutes
 
 @Injectable()
 export class CallingService {
   private readonly logger = new Logger(CallingService.name);
-  private readonly redis: Redis;
 
   constructor(
     private readonly prisma: PrismaService,
     @Inject(TELEPHONY_PROVIDER)
     private readonly telephonyProvider: TelephonyProvider,
-    configService: ConfigService,
-  ) {
-    this.redis = new Redis(
-      configService.get<string>('redis.url') || 'redis://localhost:6383',
-    );
-  }
+    private readonly redis: RedisService,
+  ) {}
 
   // 6.1.2 — Generate WebRTC client token
   async getCallToken(userId: string) {
@@ -35,11 +29,7 @@ export class CallingService {
       await this.telephonyProvider.generateClientToken(user.id);
 
     // Cache token in Redis
-    await this.redis.setex(
-      `webrtc:token:${userId}`,
-      CALL_TOKEN_TTL,
-      token,
-    );
+    await this.redis.setex(`webrtc:token:${userId}`, CALL_TOKEN_TTL, token);
 
     return {
       token,

@@ -241,7 +241,6 @@ export class AuthService {
     let payload: { sub: string; email: string };
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { OAuth2Client } = require('google-auth-library');
       const client = new OAuth2Client();
       const ticket = await client.verifyIdToken({
@@ -343,10 +342,7 @@ export class AuthService {
     // Always return success even if email not found (security best practice)
     if (user) {
       const token = crypto.randomBytes(32).toString('hex');
-      const tokenHash = crypto
-        .createHash('sha256')
-        .update(token)
-        .digest('hex');
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
       await this.prisma.passwordResetToken.create({
         data: {

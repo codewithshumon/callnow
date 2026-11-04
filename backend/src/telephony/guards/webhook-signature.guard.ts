@@ -41,6 +41,7 @@ export class WebhookSignatureGuard implements CanActivate {
       headers: request.headers,
       query: request.query as Record<string, string>,
       rawBody: request.rawBody,
+      originalUrl: request.originalUrl,
     };
 
     const isValid = this.provider.validateWebhookSignature(rawWebhookRequest);

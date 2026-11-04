@@ -139,6 +139,7 @@ export interface RawWebhookRequest {
   headers: Record<string, string | string[] | undefined>;
   query?: Record<string, string>;
   rawBody?: Buffer; // required for Twilio signature verification
+  originalUrl?: string; // required for full URL HMAC signature verification
 }
 
 // ---------------------------------------------------------------------------
@@ -173,33 +174,23 @@ export interface TelephonyProvider {
     identity: string,
   ): Promise<{ token: string; expiresIn: number }>;
 
-  initiateOutboundCall(
-    params: OutboundCallParams,
-  ): Promise<ProviderCallResult>;
+  initiateOutboundCall(params: OutboundCallParams): Promise<ProviderCallResult>;
 
   generateCallControlResponse(action: CallControlAction): string;
 
   // Webhooks
   validateWebhookSignature(req: RawWebhookRequest): boolean;
 
-  parseInboundMessageWebhook(
-    req: RawWebhookRequest,
-  ): NormalizedInboundMessage;
+  parseInboundMessageWebhook(req: RawWebhookRequest): NormalizedInboundMessage;
 
-  parseInboundCallWebhook(
-    req: RawWebhookRequest,
-  ): NormalizedInboundCall;
+  parseInboundCallWebhook(req: RawWebhookRequest): NormalizedInboundCall;
 
-  parseStatusCallback(
-    req: RawWebhookRequest,
-  ): NormalizedStatusEvent;
+  parseStatusCallback(req: RawWebhookRequest): NormalizedStatusEvent;
 
   // Voicemail
   getRecording(
     providerRecordingSid: string,
   ): Promise<{ url: string; durationSeconds: number }>;
 
-  transcribeRecording?(
-    providerRecordingSid: string,
-  ): Promise<string>;
+  transcribeRecording?(providerRecordingSid: string): Promise<string>;
 }

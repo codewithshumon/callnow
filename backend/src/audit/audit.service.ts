@@ -23,7 +23,7 @@ export class AuditService {
           action,
           resourceType,
           resourceId,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           details: details as any,
           ipAddress: ip || null,
           userAgent: userAgent || null,

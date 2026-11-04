@@ -78,7 +78,11 @@ export class ContactsService {
     const contact = await this.prisma.contact.findFirst({
       where: { id: contactId, userId },
     });
-    if (!contact) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Contact not found' });
+    if (!contact)
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Contact not found',
+      });
 
     // Sync phones: delete old, create new
     if (dto.phones !== undefined) {
@@ -112,7 +116,11 @@ export class ContactsService {
     const contact = await this.prisma.contact.findFirst({
       where: { id: contactId, userId },
     });
-    if (!contact) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Contact not found' });
+    if (!contact)
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Contact not found',
+      });
 
     await this.prisma.contact.delete({ where: { id: contactId } });
     return { message: 'Contact deleted' };
@@ -144,7 +152,9 @@ export class ContactsService {
           name: row.name || 'Unknown',
           email: row.email || null,
           notes: row.notes || null,
-          tags: row.tags ? row.tags.split(',').map((t: string) => t.trim()) : [],
+          tags: row.tags
+            ? row.tags.split(',').map((t: string) => t.trim())
+            : [],
           phones: {
             create: [{ number: phone, label: row.label || 'mobile' }],
           },

@@ -69,10 +69,7 @@ export class CallingController {
     @Param('id') id: string,
     @Res() res: Response,
   ) {
-    const { url } = await this.callingService.getVoicemailRecording(
-      userId,
-      id,
-    );
+    const { url } = await this.callingService.getVoicemailRecording(userId, id);
     if (!url) {
       throw new NotFoundException({
         code: 'NOT_FOUND',

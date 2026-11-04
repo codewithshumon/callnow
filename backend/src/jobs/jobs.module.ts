@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
+import { TelephonyModule } from '../telephony/telephony.module';
 import { NumberGracePeriodJob } from './number-grace-period.job';
 import { UsageAlertJob } from './usage-alert.job';
 import { InvoiceGenerationJob } from './invoice-generation.job';
@@ -8,7 +9,7 @@ import { TokenCleanupJob } from './token-cleanup.job';
 import { ScheduledMessageJob } from './scheduled-message.job';
 
 @Module({
-  imports: [ScheduleModule.forRoot()],
+  imports: [ScheduleModule.forRoot(), TelephonyModule],
   providers: [
     NumberGracePeriodJob,
     UsageAlertJob,

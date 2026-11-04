@@ -9,14 +9,16 @@ import {
 import type { RawBodyRequest } from '@nestjs/common';
 import type { Request } from 'express';
 import { PrismaService } from '../../prisma/prisma.service';
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 type StripeClient = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 type StripeEvent = any;
 
 import { ConfigService } from '@nestjs/config';
+import { Public } from '../../common/decorators/public.decorator';
 
 @Controller('webhooks/stripe')
+@Public()
 export class StripeWebhookController {
   private readonly logger = new Logger(StripeWebhookController.name);
   private readonly stripe: StripeClient;
@@ -25,11 +27,11 @@ export class StripeWebhookController {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const StripeSdk = require('stripe');
-    this.stripe = new StripeSdk(
-      configService.get<string>('STRIPE_SECRET_KEY') || '',
-    );
+    const apiKey =
+      configService.get<string>('STRIPE_SECRET_KEY') ||
+      'sk_test_dummy_key_for_testing';
+    this.stripe = new StripeSdk(apiKey);
   }
 
   @Post()
@@ -39,7 +41,8 @@ export class StripeWebhookController {
   ) {
     const rawReq = req as RawBodyRequest<Request>;
     // 9.2.2 — Stripe signature verification
-    const webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET') || '';
+    const webhookSecret =
+      this.configService.get<string>('STRIPE_WEBHOOK_SECRET') || '';
     let event: StripeEvent;
 
     if (webhookSecret && sig) {
@@ -58,7 +61,7 @@ export class StripeWebhookController {
       }
     } else {
       // Dev mode: trust body directly
-      event = req.body as StripeEvent;
+      event = req.body;
     }
 
     this.logger.log(`Stripe webhook: ${event.type}`);

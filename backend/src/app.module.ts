@@ -26,6 +26,8 @@ import redisConfig from './config/redis.config';
 import telephonyConfig from './config/telephony.config';
 import jwtConfig from './config/jwt.config';
 import appConfig from './config/app.config';
+import { RedisModule } from './redis/redis.module';
+import { RedisService } from './redis/redis.service';
 import Redis from 'ioredis';
 
 @Module({
@@ -33,18 +35,30 @@ import Redis from 'ioredis';
     // Global configuration — Phase 0.2
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, redisConfig, telephonyConfig, jwtConfig, appConfig],
+      load: [
+        databaseConfig,
+        redisConfig,
+        telephonyConfig,
+        jwtConfig,
+        appConfig,
+      ],
     }),
+
+    // Global Redis client
+    RedisModule,
 
     // Rate limiting — Phase 1.6
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const redisUrl = configService.get<string>('redis.url') || 'redis://localhost:6383';
+        const redisUrl =
+          configService.get<string>('redis.url') || 'redis://localhost:6383';
         return {
           throttlers: [{ ttl: 60_000, limit: 100 }],
-          storage: new RedisThrottlerStorage(new Redis(redisUrl)),
+          storage: new RedisThrottlerStorage(
+            new Redis(redisUrl, { lazyConnect: true }),
+          ),
         };
       },
     }),
@@ -55,7 +69,8 @@ import Redis from 'ioredis';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         connection: {
-          url: configService.get<string>('redis.url') || 'redis://localhost:6383',
+          url:
+            configService.get<string>('redis.url') || 'redis://localhost:6383',
         },
       }),
     }),

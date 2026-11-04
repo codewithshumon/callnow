@@ -1,4 +1,9 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { CsvValidator } from './csv-validator';
@@ -20,7 +25,8 @@ export class DialerService {
     configService: ConfigService,
   ) {
     this.dialerServiceUrl =
-      configService.get<string>('app.dialerServiceUrl') || 'http://localhost:8080';
+      configService.get<string>('app.dialerServiceUrl') ||
+      'http://localhost:8080';
     this.internalApiKey =
       configService.get<string>('app.internalApiKey') || 'change-me';
 
@@ -76,11 +82,12 @@ export class DialerService {
     });
 
     const header = Object.keys(records[0] || {});
-    const phoneCol = header.find((h: string) =>
-      ['phone', 'phonenumber', 'number', 'mobile', 'tel'].includes(
-        h.toLowerCase(),
-      ),
-    ) || 'phone';
+    const phoneCol =
+      header.find((h: string) =>
+        ['phone', 'phonenumber', 'number', 'mobile', 'tel'].includes(
+          h.toLowerCase(),
+        ),
+      ) || 'phone';
     const e164Regex = /^\+[1-9]\d{1,14}$/;
 
     const contacts = records
@@ -121,7 +128,11 @@ export class DialerService {
     const campaign = await this.prisma.campaign.findFirst({
       where: { id: campaignId, userId },
     });
-    if (!campaign) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Campaign not found' });
+    if (!campaign)
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Campaign not found',
+      });
     return campaign;
   }
 
@@ -130,7 +141,11 @@ export class DialerService {
     const campaign = await this.prisma.campaign.findFirst({
       where: { id: campaignId, userId },
     });
-    if (!campaign) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Campaign not found' });
+    if (!campaign)
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Campaign not found',
+      });
 
     // Verify from_number is active and owned by user
     const ownNumber = await this.prisma.phoneNumber.findFirst({
@@ -226,10 +241,21 @@ export class DialerService {
       where: { campaignId },
     });
 
-    const header = 'phone,name,notes,status,attempts,call_duration,last_attempted_at\n';
-    const rows = contacts.map((c) =>
-      [c.phone, c.name || '', c.notes || '', c.status, c.attempts, c.callDuration || '', c.lastAttemptedAt?.toISOString() || ''].join(','),
-    ).join('\n');
+    const header =
+      'phone,name,notes,status,attempts,call_duration,last_attempted_at\n';
+    const rows = contacts
+      .map((c) =>
+        [
+          c.phone,
+          c.name || '',
+          c.notes || '',
+          c.status,
+          c.attempts,
+          c.callDuration || '',
+          c.lastAttemptedAt?.toISOString() || '',
+        ].join(','),
+      )
+      .join('\n');
 
     return Buffer.from(header + rows, 'utf-8');
   }
@@ -321,7 +347,11 @@ export class DialerService {
     const entry = await this.prisma.dncEntry.findFirst({
       where: { id: dncId, userId },
     });
-    if (!entry) throw new NotFoundException({ code: 'NOT_FOUND', message: 'DNC entry not found' });
+    if (!entry)
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'DNC entry not found',
+      });
     await this.prisma.dncEntry.delete({ where: { id: dncId } });
     return { message: 'DNC entry removed' };
   }

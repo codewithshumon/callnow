@@ -40,9 +40,7 @@ export class PlivoProvider implements TelephonyProvider {
   async searchAvailableNumbers(
     _params: NumberSearchParams,
   ): Promise<AvailableNumber[]> {
-    throw new NotImplementedException(
-      'PlivoProvider.searchAvailableNumbers',
-    );
+    throw new NotImplementedException('PlivoProvider.searchAvailableNumbers');
   }
 
   async provisionNumber(
@@ -60,9 +58,7 @@ export class PlivoProvider implements TelephonyProvider {
     _providerSid: string,
     _webhookConfig: WebhookConfig,
   ): Promise<void> {
-    throw new NotImplementedException(
-      'PlivoProvider.configureNumberWebhooks',
-    );
+    throw new NotImplementedException('PlivoProvider.configureNumberWebhooks');
   }
 
   async sendMessage(
@@ -90,9 +86,7 @@ export class PlivoProvider implements TelephonyProvider {
   }
 
   validateWebhookSignature(_req: RawWebhookRequest): boolean {
-    throw new NotImplementedException(
-      'PlivoProvider.validateWebhookSignature',
-    );
+    throw new NotImplementedException('PlivoProvider.validateWebhookSignature');
   }
 
   parseInboundMessageWebhook(
@@ -104,9 +98,7 @@ export class PlivoProvider implements TelephonyProvider {
   }
 
   parseInboundCallWebhook(_req: RawWebhookRequest): NormalizedInboundCall {
-    throw new NotImplementedException(
-      'PlivoProvider.parseInboundCallWebhook',
-    );
+    throw new NotImplementedException('PlivoProvider.parseInboundCallWebhook');
   }
 
   parseStatusCallback(_req: RawWebhookRequest): NormalizedStatusEvent {

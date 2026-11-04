@@ -17,8 +17,10 @@ import { TELEPHONY_PROVIDER } from '../../telephony/telephony.module';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NumbersService } from '../../numbers/numbers.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Public } from '../../common/decorators/public.decorator';
 
 @Controller('webhooks')
+@Public()
 export class VoiceWebhookController {
   private readonly logger = new Logger(VoiceWebhookController.name);
 
@@ -33,12 +35,12 @@ export class VoiceWebhookController {
   private toRaw(req: Request): RawWebhookRequest {
     return {
       body: req.body as Record<string, unknown>,
-      headers: req.headers as Record<string, string | string[] | undefined>,
+      headers: req.headers,
       rawBody: (req as unknown as { rawBody?: Buffer }).rawBody,
     };
   }
 
-  // 6.2.2 — Inbound call
+  // 6.2.2 — Inbound and WebRTC outbound call routing
   @Post(':provider/voice')
   @UseGuards(WebhookSignatureGuard)
   async handleInboundCall(
@@ -47,8 +49,52 @@ export class VoiceWebhookController {
   ) {
     const raw = this.toRaw(req);
     const normalized = this.telephonyProvider.parseInboundCallWebhook(raw);
+    const body = (req.body || {}) as Record<string, string>;
+    const caller = body.Caller || body.From || normalized.from || '';
 
-    // Lookup owner by the "to" number
+    // Check if this is an outbound call initiated by our WebRTC browser client
+    const isClientOutbound =
+      caller.startsWith('client:') ||
+      Boolean(body.to && body.from && caller.startsWith('client:'));
+
+    if (isClientOutbound) {
+      const clientId = caller.replace('client:', '').trim();
+      const targetNumber = body.to || body.To || normalized.to;
+      const callerId =
+        body.from || (caller.startsWith('client:') ? '' : caller);
+
+      let ownerId = clientId;
+      if (callerId) {
+        const verifiedOwner =
+          await this.numbersService.getUserByNumber(callerId);
+        if (verifiedOwner) {
+          ownerId = verifiedOwner;
+        }
+      }
+
+      // Create outbound CDR
+      await this.prisma.call.create({
+        data: {
+          userId: ownerId || null,
+          providerCallSid: normalized.providerCallSid,
+          provider: this.telephonyProvider.name,
+          fromNumber: callerId || 'WebRTC',
+          toNumber: targetNumber,
+          direction: 'outbound',
+          status: 'initiated',
+          startedAt: new Date(),
+        },
+      });
+
+      // Return TwiML to dial external PSTN number with user's callerId
+      return this.telephonyProvider.generateCallControlResponse({
+        type: 'dial-number',
+        number: targetNumber,
+        timeout: 30,
+      });
+    }
+
+    // Inbound PSTN call to one of the user's provisioned numbers
     const ownerId = await this.numbersService.getUserByNumber(normalized.to);
 
     if (!ownerId) {
@@ -119,15 +165,13 @@ export class VoiceWebhookController {
         updates.durationSeconds = duration;
         // Calculate cost — $0.013/min outbound, $0.0085/min inbound (approx)
         const ratePerMinute = call.direction === 'outbound' ? 0.013 : 0.0085;
-        updates.cost = parseFloat(
-          ((duration / 60) * ratePerMinute).toFixed(6),
-        );
+        updates.cost = parseFloat(((duration / 60) * ratePerMinute).toFixed(6));
       }
     }
 
     await this.prisma.call.update({
       where: { id: call.id },
-      data: updates as Parameters<typeof this.prisma.call.update>[0]['data'],
+      data: updates,
     });
 
     // If no-answer or failed, check for voicemail (provider may have sent RecordingUrl)
@@ -151,9 +195,7 @@ export class VoiceWebhookController {
             ),
           },
         });
-        this.logger.log(
-          `Voicemail from ${normalized.status} call ${call.id}`,
-        );
+        this.logger.log(`Voicemail from ${normalized.status} call ${call.id}`);
       }
     }
 

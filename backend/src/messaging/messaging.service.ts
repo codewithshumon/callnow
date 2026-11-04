@@ -11,13 +11,11 @@ import { TELEPHONY_PROVIDER } from '../telephony/telephony.module';
 import { NumbersService } from '../numbers/numbers.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SendMessageDto } from './dto/send-message.dto';
-import Redis from 'ioredis';
-import { ConfigService } from '@nestjs/config';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class MessagingService {
   private readonly logger = new Logger(MessagingService.name);
-  private readonly redis: Redis;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -25,12 +23,8 @@ export class MessagingService {
     private readonly telephonyProvider: TelephonyProvider,
     private readonly numbersService: NumbersService,
     private readonly eventEmitter: EventEmitter2,
-    configService: ConfigService,
-  ) {
-    this.redis = new Redis(
-      configService.get<string>('redis.url') || 'redis://localhost:6383',
-    );
-  }
+    private readonly redis: RedisService,
+  ) {}
 
   // 5.1.2 — Get conversations (paginated)
   async getConversations(userId: string, page = 1, limit = 20) {

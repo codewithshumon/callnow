@@ -1,4 +1,11 @@
-import { Controller, Post, Body, UseGuards, HttpCode, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  HttpCode,
+  BadRequestException,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -47,7 +54,10 @@ export class AuthController {
   @HttpCode(200)
   async refresh(@Body() dto: RefreshDto) {
     if (!dto.refreshToken) {
-      throw new BadRequestException({ code: 'NO_TOKEN', message: 'No refresh token' });
+      throw new BadRequestException({
+        code: 'NO_TOKEN',
+        message: 'No refresh token',
+      });
     }
     return this.authService.refresh(dto.refreshToken);
   }
@@ -115,7 +125,10 @@ export class AuthController {
   async getWsToken(@CurrentUser() user: JwtUser) {
     const wsToken = this.jwtService.sign(
       { sub: user.id, email: user.email, role: user.role },
-      { expiresIn: '5m', secret: this.configService.get<string>('jwt.accessSecret') },
+      {
+        expiresIn: '5m',
+        secret: this.configService.get<string>('jwt.accessSecret'),
+      },
     );
     return { token: wsToken, expiresIn: 300 };
   }

@@ -49,7 +49,7 @@ export const TELEPHONY_PROVIDER = 'TELEPHONY_PROVIDER';
           default:
             throw new Error(
               `Unsupported TELEPHONY_PROVIDER: "${providerName}". ` +
-              `Valid values: twilio, vonage, bandwidth, plivo, telnyx`,
+                `Valid values: twilio, vonage, bandwidth, plivo, telnyx`,
             );
         }
       },

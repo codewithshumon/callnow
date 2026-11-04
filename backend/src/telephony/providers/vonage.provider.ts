@@ -59,9 +59,7 @@ export class VonageProvider implements TelephonyProvider {
     _providerSid: string,
     _webhookConfig: WebhookConfig,
   ): Promise<void> {
-    throw new NotImplementedException(
-      'VonageProvider.configureNumberWebhooks',
-    );
+    throw new NotImplementedException('VonageProvider.configureNumberWebhooks');
   }
 
   async sendMessage(
@@ -89,7 +87,9 @@ export class VonageProvider implements TelephonyProvider {
   }
 
   validateWebhookSignature(_req: RawWebhookRequest): boolean {
-    throw new NotImplementedException('VonageProvider.validateWebhookSignature');
+    throw new NotImplementedException(
+      'VonageProvider.validateWebhookSignature',
+    );
   }
 
   parseInboundMessageWebhook(
@@ -101,9 +101,7 @@ export class VonageProvider implements TelephonyProvider {
   }
 
   parseInboundCallWebhook(_req: RawWebhookRequest): NormalizedInboundCall {
-    throw new NotImplementedException(
-      'VonageProvider.parseInboundCallWebhook',
-    );
+    throw new NotImplementedException('VonageProvider.parseInboundCallWebhook');
   }
 
   parseStatusCallback(_req: RawWebhookRequest): NormalizedStatusEvent {

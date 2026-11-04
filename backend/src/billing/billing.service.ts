@@ -60,7 +60,11 @@ export class BillingService {
   // 9.1.4 — Create Stripe Checkout session
   async createCheckoutSession(userId: string, planId: string) {
     const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
-    if (!plan) throw new BadRequestException({ code: 'NOT_FOUND', message: 'Plan not found' });
+    if (!plan)
+      throw new BadRequestException({
+        code: 'NOT_FOUND',
+        message: 'Plan not found',
+      });
 
     // In production, this would call Stripe API:
     // const session = await stripe.checkout.sessions.create({...})
@@ -69,13 +73,19 @@ export class BillingService {
 
     this.logger.log(`Checkout session for ${user?.email} → ${plan.name}`);
 
-    return { checkoutUrl: `https://checkout.voicelink.io/${plan.name.toLowerCase()}` };
+    return {
+      checkoutUrl: `https://checkout.voicelink.io/${plan.name.toLowerCase()}`,
+    };
   }
 
   // 9.1.5 — Upgrade/downgrade plan
   async upgradePlan(userId: string, planId: string) {
     const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
-    if (!plan) throw new BadRequestException({ code: 'NOT_FOUND', message: 'Plan not found' });
+    if (!plan)
+      throw new BadRequestException({
+        code: 'NOT_FOUND',
+        message: 'Plan not found',
+      });
 
     await this.prisma.subscription.upsert({
       where: { userId },
