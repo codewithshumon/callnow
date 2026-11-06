@@ -53,7 +53,7 @@
      LANDING PAGE WIDTH (Only affects the '/' landing page)
      Adjust this value to increase or decrease the landing page container max-width.
      ========================================================================== */
-  --landing-container-max-width: 1660px;
+  --landing-container-max-width: 1440px;
 
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -61,7 +61,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.546 0.245 262.881);        /* blue-600 #2563EB */
+  --primary: oklch(0.546 0.245 262.881);
+  /* blue-600 #2563EB */
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -69,24 +70,33 @@
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);      /* red-600 */
+  --destructive: oklch(0.577 0.245 27.325);
+  /* red-600 */
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.546 0.245 262.881);             /* match primary blue */
-  --chart-1: oklch(0.546 0.245 262.881);          /* blue */
-  --chart-2: oklch(0.665 0.215 142.495);          /* green */
-  --chart-3: oklch(0.795 0.185 94.569);           /* yellow */
-  --chart-4: oklch(0.577 0.245 27.325);           /* red */
-  --chart-5: oklch(0.556 0 0);                    /* gray */
+  --ring: oklch(0.546 0.245 262.881);
+  /* match primary blue */
+  --chart-1: oklch(0.546 0.245 262.881);
+  /* blue */
+  --chart-2: oklch(0.665 0.215 142.495);
+  /* green */
+  --chart-3: oklch(0.795 0.185 94.569);
+  /* yellow */
+  --chart-4: oklch(0.577 0.245 27.325);
+  /* red */
+  --chart-5: oklch(0.556 0 0);
+  /* gray */
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.546 0.245 262.881);  /* blue */
+  --sidebar-primary: oklch(0.546 0.245 262.881);
+  /* blue */
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.546 0.245 262.881);     /* blue */
+  --sidebar-ring: oklch(0.546 0.245 262.881);
+  /* blue */
 }
 
 .dark {
@@ -96,7 +106,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.623 0.214 259.815);          /* blue-500 for dark */
+  --primary: oklch(0.623 0.214 259.815);
+  /* blue-500 for dark */
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -107,29 +118,39 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.623 0.214 259.815);             /* match dark primary */
-  --chart-1: oklch(0.623 0.214 259.815);          /* blue */
-  --chart-2: oklch(0.665 0.215 142.495);          /* green */
-  --chart-3: oklch(0.795 0.185 94.569);           /* yellow */
-  --chart-4: oklch(0.704 0.191 22.216);           /* red */
-  --chart-5: oklch(0.556 0 0);                    /* gray */
+  --ring: oklch(0.623 0.214 259.815);
+  /* match dark primary */
+  --chart-1: oklch(0.623 0.214 259.815);
+  /* blue */
+  --chart-2: oklch(0.665 0.215 142.495);
+  /* green */
+  --chart-3: oklch(0.795 0.185 94.569);
+  /* yellow */
+  --chart-4: oklch(0.704 0.191 22.216);
+  /* red */
+  --chart-5: oklch(0.556 0 0);
+  /* gray */
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.623 0.214 259.815);  /* blue-500 */
+  --sidebar-primary: oklch(0.623 0.214 259.815);
+  /* blue-500 */
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.623 0.214 259.815);     /* blue */
+  --sidebar-ring: oklch(0.623 0.214 259.815);
+  /* blue */
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }
@@ -142,7 +163,7 @@
    ========================================================================== */
 .landing-container {
   width: 100%;
-  max-width: var(--landing-container-max-width, 1660px);
+  max-width: var(--landing-container-max-width, 1440px);
   margin-left: auto;
   margin-right: auto;
 }
