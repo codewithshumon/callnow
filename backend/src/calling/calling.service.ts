@@ -1,4 +1,4 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { TelephonyProvider } from '../telephony/interfaces/telephony-provider.interface';
 import { TELEPHONY_PROVIDER } from '../telephony/telephony.module';
@@ -23,7 +23,7 @@ export class CallingService {
       where: { id: userId },
       select: { id: true },
     });
-    if (!user) throw new Error('User not found');
+    if (!user) throw new NotFoundException({ code: 'NOT_FOUND', message: 'User not found' });
 
     const { token, expiresIn } =
       await this.telephonyProvider.generateClientToken(user.id);
@@ -97,7 +97,11 @@ export class CallingService {
     const voicemail = await this.prisma.voicemail.findFirst({
       where: { id: voicemailId, userId },
     });
-    if (!voicemail) throw new Error('Voicemail not found');
+    if (!voicemail)
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Voicemail not found',
+      });
 
     return this.prisma.voicemail.update({
       where: { id: voicemailId },
@@ -109,7 +113,11 @@ export class CallingService {
     const voicemail = await this.prisma.voicemail.findFirst({
       where: { id: voicemailId, userId },
     });
-    if (!voicemail) throw new Error('Voicemail not found');
+    if (!voicemail)
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Voicemail not found',
+      });
     return { url: voicemail.recordingUrl };
   }
 }

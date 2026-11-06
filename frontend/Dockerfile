@@ -29,4 +29,5 @@ COPY --from=builder /app/package.json /app/pnpm-workspace.yaml* ./
 COPY --from=builder /app/next.config.ts ./
 
 EXPOSE 3000
+USER node
 CMD ["node_modules/.bin/next", "start"]

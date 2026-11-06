@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
 import { Public } from '../../common/decorators/public.decorator';
 import { DialerService } from '../dialer.service';
 
@@ -38,9 +39,18 @@ export class DialerCallbackController {
       remaining: number;
     },
   ) {
-    // 8.4.3 — Validate INTERNAL_API_KEY
+    // 8.4.3 — Validate INTERNAL_API_KEY with timing-safe comparison
     const token = authHeader?.replace('Bearer ', '');
-    if (!token || token !== this.internalApiKey) {
+    const isTokenValid =
+      token &&
+      this.internalApiKey &&
+      token.length === this.internalApiKey.length &&
+      crypto.timingSafeEqual(
+        Buffer.from(token),
+        Buffer.from(this.internalApiKey),
+      );
+
+    if (!isTokenValid) {
       throw new UnauthorizedException({
         code: 'UNAUTHORIZED',
         message: 'Invalid internal API key',

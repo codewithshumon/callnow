@@ -63,14 +63,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
     } else {
       // Non-HttpException: internal server error
       status = HttpStatus.INTERNAL_SERVER_ERROR;
-      const message =
+      const rawMessage =
         exception instanceof Error
           ? exception.message
           : 'Internal server error';
-      errorBody = { code: 'INTERNAL_ERROR', message };
+
+      // Prevent internal error details/stack traces leaking in production
+      const isProd = process.env.NODE_ENV === 'production';
+      const clientMessage = isProd ? 'Internal server error' : rawMessage;
+      errorBody = { code: 'INTERNAL_ERROR', message: clientMessage };
 
       this.logger.error(
-        `Unhandled exception: ${message}`,
+        `Unhandled exception: ${rawMessage}`,
         exception instanceof Error ? exception.stack : undefined,
       );
     }

@@ -72,7 +72,9 @@ export class AuthService {
     });
 
     // Send verification email (log; SendGrid integration is Phase 9/billing)
-    this.logger.log(`Verification token for ${dto.email}: ${token}`);
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.debug(`[DEV ONLY] Verification token for ${dto.email}: ${token}`);
+    }
 
     return {
       user: { id: user.id, email: user.email },
@@ -156,6 +158,22 @@ export class AuthService {
   }
 
   private async requestPhoneOtp(phone: string) {
+    // Check cooldown to prevent SMS pumping / toll fraud (max 1 request per 60 seconds)
+    const recentOtp = await this.prisma.otpCode.findFirst({
+      where: {
+        phone,
+        action: 'login',
+        createdAt: { gte: new Date(Date.now() - 60 * 1000) },
+      },
+    });
+
+    if (recentOtp) {
+      throw new BadRequestException({
+        code: 'RATE_LIMITED',
+        message: 'Please wait before requesting another verification code',
+      });
+    }
+
     const code = crypto.randomInt(100000, 999999).toString();
     const codeHash = await bcrypt.hash(code, BCRYPT_COST);
 
@@ -180,7 +198,9 @@ export class AuthService {
       // Don't expose provider errors to caller
     }
 
-    this.logger.log(`OTP for ${phone}: ${code}`); // Fallback for dev
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.debug(`[DEV ONLY] OTP for ${phone}: ${code}`);
+    }
     return { message: 'Verification code sent' };
   }
 
@@ -352,7 +372,9 @@ export class AuthService {
         },
       });
 
-      this.logger.log(`Password reset token for ${email}: ${token}`);
+      if (process.env.NODE_ENV !== 'production') {
+        this.logger.debug(`[DEV ONLY] Password reset token for ${email}: ${token}`);
+      }
     }
 
     return {
@@ -489,7 +511,7 @@ export class AuthService {
   // Token Helpers
   // ---------------------------------------------------------------------------
   private async issueTokens(userId: string, email: string, role: string) {
-    const payload = { sub: userId, email, role };
+    const payload = { sub: userId, email, role, type: 'access' };
 
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: '15m', // FR-AUTH-05

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"crypto/subtle"
 	"net/http"
 	"strings"
 
@@ -24,7 +25,8 @@ func AuthMiddleware(internalAPIKey string) echo.MiddlewareFunc {
 			}
 
 			token := parts[1]
-			if token != internalAPIKey {
+			// Constant-time compare to prevent timing attack side-channels
+			if internalAPIKey == "" || subtle.ConstantTimeCompare([]byte(token), []byte(internalAPIKey)) != 1 {
 				status, resp := dto.Error(http.StatusUnauthorized, "UNAUTHORIZED", "Invalid API key")
 				return c.JSON(status, resp)
 			}

@@ -11,7 +11,18 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
-@WebSocketGateway({ namespace: '/ws', cors: true })
+@WebSocketGateway({
+  namespace: '/ws',
+  cors: {
+    origin: (
+      process.env.CORS_ORIGIN ||
+      'http://localhost:3000,http://localhost:8000,http://localhost:3001'
+    )
+      .split(',')
+      .map((o) => o.trim()),
+    credentials: true,
+  },
+})
 export class DialerGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
@@ -49,6 +60,13 @@ export class DialerGateway implements OnGatewayConnection, OnGatewayDisconnect {
         secret:
           this.configService.get<string>('jwt.accessSecret') || 'change-me',
       });
+
+      // Reject partial 2FA login tokens
+      if (payload.step === '2fa') {
+        this.logger.warn(`Dialer WS: rejected 2FA login token from ${client.id}`);
+        client.disconnect();
+        return;
+      }
 
       const userId = payload.sub;
       if (!userId) {

@@ -23,7 +23,8 @@ export class ApiKeysService {
       data: { userId, name, keyPrefix, keyHash, scopes },
     });
 
-    return { ...apiKey, rawKey }; // Return raw key ONLY on creation
+    const { keyHash: _, ...safeApiKey } = apiKey;
+    return { ...safeApiKey, rawKey }; // Return raw key ONLY on creation; never expose hash
   }
 
   // 11.1.3 — List keys (never show hash)

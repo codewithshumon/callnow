@@ -45,7 +45,18 @@ export class StripeWebhookController {
       this.configService.get<string>('STRIPE_WEBHOOK_SECRET') || '';
     let event: StripeEvent;
 
-    if (webhookSecret && sig) {
+    const isProd = process.env.NODE_ENV === 'production';
+    if (!webhookSecret || !sig) {
+      if (isProd) {
+        throw new BadRequestException({
+          code: 'FORBIDDEN',
+          message: 'Webhook secret or signature missing',
+        });
+      }
+      // Dev mode: trust body directly only in non-production
+      this.logger.warn('Processing Stripe webhook in dev without signature verification');
+      event = req.body;
+    } else {
       try {
         event = this.stripe.webhooks.constructEvent(
           rawReq.rawBody || Buffer.from(JSON.stringify(req.body ?? {})),
@@ -59,9 +70,6 @@ export class StripeWebhookController {
           message: 'Invalid webhook signature',
         });
       }
-    } else {
-      // Dev mode: trust body directly
-      event = req.body;
     }
 
     this.logger.log(`Stripe webhook: ${event.type}`);

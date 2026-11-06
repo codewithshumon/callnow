@@ -163,14 +163,14 @@ export class MessagingService {
 
   // 5.1.5 — Soft-delete a message
   async deleteMessage(messageId: string, userId: string) {
-    const conversation = await this.prisma.conversation.findFirst({
-      where: { userId },
-      include: {
-        messages: { where: { id: messageId }, take: 1 },
+    const message = await this.prisma.message.findFirst({
+      where: {
+        id: messageId,
+        conversation: { userId },
       },
     });
 
-    if (!conversation || conversation.messages.length === 0) {
+    if (!message) {
       throw new NotFoundException({
         code: 'NOT_FOUND',
         message: 'Message not found',

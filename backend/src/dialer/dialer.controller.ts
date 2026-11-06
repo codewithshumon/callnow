@@ -11,6 +11,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Res,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
@@ -40,8 +41,11 @@ export class DialerController {
     @Body() dto: CreateCampaignDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    if (!file) {
-      throw new Error('CSV file (contacts) is required');
+    if (!file || !file.buffer) {
+      throw new BadRequestException({
+        code: 'VALIDATION_ERROR',
+        message: 'CSV file (contacts) is required',
+      });
     }
     return this.dialerService.createCampaign(userId, dto, file.buffer);
   }

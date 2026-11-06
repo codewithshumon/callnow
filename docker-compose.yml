@@ -48,7 +48,9 @@ services:
       - PORT=8080
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/voicelink
       - REDIS_URL=redis://redis:6379
-      - TELEPHONY_PROVIDER=twilio
+      - TELEPHONY_PROVIDER=${TELEPHONY_PROVIDER:-telnyx}
+      - TELNYX_API_KEY=${TELNYX_API_KEY:-}
+      - TELNYX_CONNECTION_ID=${TELNYX_CONNECTION_ID:-}
       - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
       - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
       - NESTJS_CALLBACK_URL=http://backend:4000
@@ -73,6 +75,12 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/voicelink
       - REDIS_URL=redis://redis:6379
       - DIALER_SERVICE_URL=http://dialer:8080
+      - TELEPHONY_PROVIDER=${TELEPHONY_PROVIDER:-telnyx}
+      - TELNYX_API_KEY=${TELNYX_API_KEY:-}
+      - TELNYX_PUBLIC_KEY=${TELNYX_PUBLIC_KEY:-}
+      - TELNYX_CONNECTION_ID=${TELNYX_CONNECTION_ID:-}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
       - INTERNAL_API_KEY=${INTERNAL_API_KEY:-change-me-internal-key}
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET:-change-me-access-secret}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-change-me-refresh-secret}

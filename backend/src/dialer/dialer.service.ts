@@ -241,18 +241,32 @@ export class DialerService {
       where: { campaignId },
     });
 
+    const sanitizeCell = (val: unknown): string => {
+      if (val === null || val === undefined) return '';
+      let str = String(val);
+      // Neutralize formula injection (=, +, -, @, tab, CR)
+      if (/^[=\+\-@\t\r]/.test(str)) {
+        str = `'${str}`;
+      }
+      // Quote string if it contains comma, double-quote, or newline
+      if (/[",\n\r]/.test(str)) {
+        str = `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
     const header =
       'phone,name,notes,status,attempts,call_duration,last_attempted_at\n';
     const rows = contacts
       .map((c) =>
         [
-          c.phone,
-          c.name || '',
-          c.notes || '',
-          c.status,
-          c.attempts,
-          c.callDuration || '',
-          c.lastAttemptedAt?.toISOString() || '',
+          sanitizeCell(c.phone),
+          sanitizeCell(c.name),
+          sanitizeCell(c.notes),
+          sanitizeCell(c.status),
+          sanitizeCell(c.attempts),
+          sanitizeCell(c.callDuration),
+          sanitizeCell(c.lastAttemptedAt?.toISOString()),
         ].join(','),
       )
       .join('\n');
