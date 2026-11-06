@@ -41,11 +41,11 @@ export const TELEPHONY_PROVIDER = 'TELEPHONY_PROVIDER';
           case 'vonage':
             return new VonageProvider();
           case 'bandwidth':
-            return new BandwidthProvider();
+            return new BandwidthProvider(configService);
           case 'plivo':
             return new PlivoProvider();
           case 'telnyx':
-            return new TelnyxProvider();
+            return new TelnyxProvider(configService);
           default:
             throw new Error(
               `Unsupported TELEPHONY_PROVIDER: "${providerName}". ` +

@@ -15,6 +15,8 @@ type Config struct {
 	TelephonyProvider string
 	TwilioAccountSid  string
 	TwilioAuthToken   string
+	TelnyxApiKey      string
+	TelnyxConnectionId string
 	NestjsCallbackURL string
 	InternalApiKey    string
 	LogLevel          string
@@ -32,6 +34,8 @@ func Load() (*Config, error) {
 		TelephonyProvider: getEnv("TELEPHONY_PROVIDER", "twilio"),
 		TwilioAccountSid:  os.Getenv("TWILIO_ACCOUNT_SID"),
 		TwilioAuthToken:   os.Getenv("TWILIO_AUTH_TOKEN"),
+		TelnyxApiKey:      os.Getenv("TELNYX_API_KEY"),
+		TelnyxConnectionId: os.Getenv("TELNYX_CONNECTION_ID"),
 		NestjsCallbackURL: getEnv("NESTJS_CALLBACK_URL", "http://localhost:4000"),
 		InternalApiKey:    getEnv("INTERNAL_API_KEY", "change-me"),
 		LogLevel:          getEnv("LOG_LEVEL", "info"),

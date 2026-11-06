@@ -79,6 +79,8 @@ func main() {
 	switch cfg.TelephonyProvider {
 	case "twilio":
 		telephonyProvider = dialer.NewTwilioClient(cfg.TwilioAccountSid, cfg.TwilioAuthToken)
+	case "telnyx":
+		telephonyProvider = dialer.NewTelnyxClient(cfg.TelnyxApiKey, cfg.TelnyxConnectionId)
 	default:
 		telephonyProvider = dialer.NewStubProvider(cfg.TelephonyProvider)
 	}
