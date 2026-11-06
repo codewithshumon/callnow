@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 // Mobile top bar — shown only on mobile to identify current page
 const pageTitles: Record<string, string> = {
@@ -33,17 +34,20 @@ export default function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
   const title = getPageTitle(pathname);
 
   return (
-    <div className="flex items-center gap-3 border-b bg-background px-4 py-3 lg:hidden">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onMenuClick}
-        aria-label="Open menu"
-        className="-ml-1"
-      >
-        <Menu className="h-5 w-5" />
-      </Button>
-      <h1 className="text-lg font-semibold">{title}</h1>
+    <div className="flex items-center justify-between border-b bg-background px-4 py-3 lg:hidden">
+      <div className="flex items-center gap-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onMenuClick}
+          aria-label="Open menu"
+          className="-ml-1"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+        <h1 className="text-lg font-semibold">{title}</h1>
+      </div>
+      <ThemeToggle />
     </div>
   );
 }

@@ -38,7 +38,7 @@ services:
       context: ./dialer-service
       dockerfile: Dockerfile
     ports:
-      - '8080:8080'
+      - '8020:8080'
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,7 +62,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - '4000:4000'
+      - '8010:4000'
     depends_on:
       postgres:
         condition: service_healthy
@@ -76,7 +76,7 @@ services:
       - INTERNAL_API_KEY=${INTERNAL_API_KEY:-change-me-internal-key}
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET:-change-me-access-secret}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-change-me-refresh-secret}
-      - CORS_ORIGIN=http://localhost:3000,http://localhost:3001
+      - CORS_ORIGIN=http://localhost:8000,http://localhost:3000,http://localhost:3001
     restart: unless-stopped
 
   # Next.js Frontend Web App
@@ -85,13 +85,17 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8010
+        - NEXT_PUBLIC_WS_URL=ws://localhost:8010
     ports:
-      - '${FRONTEND_PORT:-3001}:3000'
+      - '${FRONTEND_PORT:-8000}:3000'
     depends_on:
       - backend
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:4000
-      - NEXT_PUBLIC_WS_URL=ws://localhost:4000
+      - NEXT_PUBLIC_API_URL=http://localhost:8010
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8010
+      - NESTJS_API_URL=http://backend:4000
     restart: unless-stopped
 
   # pgAdmin 4 — PostgreSQL web admin interface

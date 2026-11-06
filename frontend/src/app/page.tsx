@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Phone, MessageSquare, Hash, BarChart3, Globe } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 const linkButtonClasses = cn(
@@ -30,12 +31,13 @@ export default function LandingPage() {
     <div className="flex flex-col min-h-full">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+        <div className="landing-container flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 font-semibold text-lg">
             <Phone className="h-5 w-5 text-primary" />
             VoiceLink
           </div>
           <nav className="flex items-center gap-3">
+            <ThemeToggle />
             <Link href="/login" className={ghostLinkClasses}>
               Log in
             </Link>
@@ -48,29 +50,31 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="flex-1 flex flex-col items-center justify-center px-4 py-24 text-center">
-        <Badge variant="secondary" className="mb-6 text-sm">
-          Now in public beta
-        </Badge>
-        <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-          International Calling & Messaging
-        </h1>
-        <p className="mt-4 max-w-xl text-lg text-muted-foreground">
-          One platform. Any browser. No SIM required. Make calls, send SMS,
-          and run power dialer campaigns — all from your laptop.
-        </p>
-        <div className="mt-8 flex gap-4">
-          <Link href="/register" className={linkButtonClasses}>
-            Get Started Free
-          </Link>
-          <Link href="/login" className={outlineLinkClasses}>
-            Sign In
-          </Link>
+        <div className="landing-container flex flex-col items-center px-4 sm:px-6 lg:px-8">
+          <Badge variant="secondary" className="mb-6 text-sm">
+            Now in public beta
+          </Badge>
+          <h1 className="max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+            International Calling & Messaging
+          </h1>
+          <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
+            One platform. Any browser. No SIM required. Make calls, send SMS,
+            and run power dialer campaigns — all from your laptop.
+          </p>
+          <div className="mt-8 flex gap-4">
+            <Link href="/register" className={linkButtonClasses}>
+              Get Started Free
+            </Link>
+            <Link href="/login" className={outlineLinkClasses}>
+              Sign In
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* Features */}
       <section className="border-t py-20">
-        <div className="container mx-auto max-w-6xl px-4">
+        <div className="landing-container px-4 sm:px-6 lg:px-8">
           <h2 className="text-center text-3xl font-bold tracking-tight">
             Everything you need to communicate globally
           </h2>
@@ -137,7 +141,7 @@ export default function LandingPage() {
 
       {/* Testimonial */}
       <section className="border-t py-20">
-        <div className="container mx-auto max-w-3xl px-4 text-center">
+        <div className="landing-container px-4 sm:px-6 lg:px-8 text-center max-w-4xl">
           <blockquote className="text-xl font-medium italic text-muted-foreground">
             &ldquo;VoiceLink lets me take client calls on my US number from
             London. My clients don&apos;t even know I&apos;m overseas. It just
@@ -150,7 +154,7 @@ export default function LandingPage() {
 
       {/* CTA */}
       <section className="border-t py-20">
-        <div className="container mx-auto max-w-lg px-4 text-center">
+        <div className="landing-container px-4 sm:px-6 lg:px-8 text-center max-w-2xl">
           <h2 className="text-2xl font-bold tracking-tight">
             Ready to get started?
           </h2>
@@ -165,7 +169,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t py-8">
-        <div className="container mx-auto max-w-6xl px-4 text-center text-sm text-muted-foreground">
+        <div className="landing-container px-4 sm:px-6 lg:px-8 text-center text-sm text-muted-foreground">
           &copy; {new Date().getFullYear()} VoiceLink. All rights reserved.
         </div>
       </footer>

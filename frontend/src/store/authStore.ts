@@ -112,8 +112,11 @@ export const useAuthStore = create<AuthState>()(
       },
 
       refreshSession: async () => {
-        // refresh_token cookie is sent automatically; proxy forwards it.
-        const res = await post<{ user: User } & AuthTokens>("/auth/refresh", {});
+        const token = get().refreshToken;
+        // Send refreshToken in body as fallback; cookies are also sent by proxy.ts
+        const res = await post<{ user: User } & AuthTokens>("/auth/refresh", {
+          refreshToken: token,
+        });
         get().setTokens({
           accessToken: res.data.accessToken,
           refreshToken: res.data.refreshToken,
@@ -131,13 +134,14 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "voicelink-auth",
       partialize: (state) => ({
-        user: state.user, // only persist user for UI; tokens live in cookies
+        user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
       }),
       onRehydrateStorage: () => {
-        return (_state, error) => {
-          if (!error) {
-            // After rehydration, check if we need to refresh
-            useAuthStore.setState({ isLoading: false });
+        return (state) => {
+          if (state) {
+            state.isLoading = false;
           }
         };
       },

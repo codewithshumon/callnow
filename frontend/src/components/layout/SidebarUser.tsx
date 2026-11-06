@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { LogOut, User as UserIcon, Sun, Moon, Laptop, Check } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -17,6 +18,7 @@ import { cn } from "@/lib/utils";
 
 export default function SidebarUser({ collapsed }: { collapsed?: boolean }) {
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
 
@@ -56,6 +58,25 @@ export default function SidebarUser({ collapsed }: { collapsed?: boolean }) {
         <DropdownMenuItem onClick={() => router.push("/settings")}>
           <UserIcon className="mr-2 h-4 w-4" />
           Profile & Settings
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+          Theme
+        </DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => setTheme("light")} className="cursor-pointer">
+          <Sun className="mr-2 h-4 w-4" />
+          Light
+          {theme === "light" && <Check className="ml-auto h-4 w-4 text-primary" />}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("dark")} className="cursor-pointer">
+          <Moon className="mr-2 h-4 w-4" />
+          Dark
+          {theme === "dark" && <Check className="ml-auto h-4 w-4 text-primary" />}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("system")} className="cursor-pointer">
+          <Laptop className="mr-2 h-4 w-4" />
+          System
+          {theme === "system" && <Check className="ml-auto h-4 w-4 text-primary" />}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>

@@ -49,6 +49,12 @@
 }
 
 :root {
+  /* ==========================================================================
+     LANDING PAGE WIDTH (Only affects the '/' landing page)
+     Adjust this value to increase or decrease the landing page container max-width.
+     ========================================================================== */
+  --landing-container-max-width: 1660px;
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -127,4 +133,16 @@
   html {
     @apply font-sans;
   }
+}
+
+/* ==========================================================================
+   LANDING PAGE CONTAINER
+   Scoped strictly to the '/' landing page. Max-width is controlled by
+   --landing-container-max-width in :root above (default: 1660px).
+   ========================================================================== */
+.landing-container {
+  width: 100%;
+  max-width: var(--landing-container-max-width, 1660px);
+  margin-left: auto;
+  margin-right: auto;
 }
