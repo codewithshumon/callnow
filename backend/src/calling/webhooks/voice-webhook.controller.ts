@@ -49,6 +49,7 @@ export class VoiceWebhookController {
   ) {
     const raw = this.toRaw(req);
     const normalized = this.telephonyProvider.parseInboundCallWebhook(raw);
+    const body = (req.body || {}) as Record<string, string>;
     const caller = body.Caller || body.From || normalized.from || '';
 
     // Check if this is an outbound call initiated by our WebRTC browser client
