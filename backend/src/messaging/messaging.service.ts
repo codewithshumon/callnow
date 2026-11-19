@@ -11,13 +11,11 @@ import { TELEPHONY_PROVIDER } from '../telephony/telephony.module';
 import { NumbersService } from '../numbers/numbers.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SendMessageDto } from './dto/send-message.dto';
-import Redis from 'ioredis';
-import { ConfigService } from '@nestjs/config';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class MessagingService {
   private readonly logger = new Logger(MessagingService.name);
-  private readonly redis: Redis;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -25,12 +23,8 @@ export class MessagingService {
     private readonly telephonyProvider: TelephonyProvider,
     private readonly numbersService: NumbersService,
     private readonly eventEmitter: EventEmitter2,
-    configService: ConfigService,
-  ) {
-    this.redis = new Redis(
-      configService.get<string>('redis.url') || 'redis://localhost:6383',
-    );
-  }
+    private readonly redis: RedisService,
+  ) {}
 
   // 5.1.2 — Get conversations (paginated)
   async getConversations(userId: string, page = 1, limit = 20) {
@@ -169,14 +163,14 @@ export class MessagingService {
 
   // 5.1.5 — Soft-delete a message
   async deleteMessage(messageId: string, userId: string) {
-    const conversation = await this.prisma.conversation.findFirst({
-      where: { userId },
-      include: {
-        messages: { where: { id: messageId }, take: 1 },
+    const message = await this.prisma.message.findFirst({
+      where: {
+        id: messageId,
+        conversation: { userId },
       },
     });
 
-    if (!conversation || conversation.messages.length === 0) {
+    if (!message) {
       throw new NotFoundException({
         code: 'NOT_FOUND',
         message: 'Message not found',

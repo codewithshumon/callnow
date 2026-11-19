@@ -30,7 +30,10 @@ export class UsageTrackerService {
   }
 
   // 9.4.3 — Check plan limits before operation, throw if exceeded
-  async checkLimit(userId: string, resource: 'sms' | 'minutes' | 'numbers'): Promise<void> {
+  async checkLimit(
+    userId: string,
+    resource: 'sms' | 'minutes' | 'numbers',
+  ): Promise<void> {
     const subscription = await this.prisma.subscription.findUnique({
       where: { userId },
       include: { plan: true },
@@ -40,14 +43,22 @@ export class UsageTrackerService {
     const usage = await this.getOrCreateRecord(userId);
     const plan = subscription.plan;
 
-    if (resource === 'sms' && plan.includedSms > 0 && usage.smsSent >= plan.includedSms) {
+    if (
+      resource === 'sms' &&
+      plan.includedSms > 0 &&
+      usage.smsSent >= plan.includedSms
+    ) {
       throw new BadRequestException({
         code: 'PLAN_LIMIT_EXCEEDED',
         message: `SMS limit reached (${usage.smsSent}/${plan.includedSms})`,
       });
     }
 
-    if (resource === 'minutes' && plan.includedMinutes > 0 && usage.minutesUsed >= plan.includedMinutes) {
+    if (
+      resource === 'minutes' &&
+      plan.includedMinutes > 0 &&
+      usage.minutesUsed >= plan.includedMinutes
+    ) {
       throw new BadRequestException({
         code: 'PLAN_LIMIT_EXCEEDED',
         message: `Minutes limit reached (${usage.minutesUsed}/${plan.includedMinutes})`,
@@ -69,7 +80,10 @@ export class UsageTrackerService {
     if (usage.smsSent >= plan.includedSms && plan.includedSms > 0) {
       this.logger.warn(`User ${userId} reached 100% SMS limit`);
     }
-    if (usage.minutesUsed >= plan.includedMinutes * 0.8 && plan.includedMinutes > 0) {
+    if (
+      usage.minutesUsed >= plan.includedMinutes * 0.8 &&
+      plan.includedMinutes > 0
+    ) {
       this.logger.warn(
         `User ${userId} at 80% minute usage (${usage.minutesUsed}/${plan.includedMinutes})`,
       );
@@ -91,12 +105,14 @@ export class UsageTrackerService {
       if (!sub.plan) continue;
       const usage = await this.getOrCreateRecord(sub.userId);
 
-      const smsPct = sub.plan.includedSms > 0
-        ? (usage.smsSent / sub.plan.includedSms) * 100
-        : 0;
-      const minPct = sub.plan.includedMinutes > 0
-        ? (usage.minutesUsed / sub.plan.includedMinutes) * 100
-        : 0;
+      const smsPct =
+        sub.plan.includedSms > 0
+          ? (usage.smsSent / sub.plan.includedSms) * 100
+          : 0;
+      const minPct =
+        sub.plan.includedMinutes > 0
+          ? (usage.minutesUsed / sub.plan.includedMinutes) * 100
+          : 0;
 
       if (smsPct >= 80 || minPct >= 80) {
         this.logger.log(

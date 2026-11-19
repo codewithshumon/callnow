@@ -49,17 +49,17 @@ export class CsvValidator {
 
     // Detect phone column
     const header = Object.keys(records[0]);
-    const phoneCol = header.find(
-      (h) =>
-        ['phone', 'phonenumber', 'number', 'mobile', 'tel'].includes(
-          h.toLowerCase(),
-        ),
+    const phoneCol = header.find((h) =>
+      ['phone', 'phonenumber', 'number', 'mobile', 'tel'].includes(
+        h.toLowerCase(),
+      ),
     );
 
     if (!phoneCol) {
       throw new BadRequestException({
         code: 'VALIDATION_ERROR',
-        message: 'No phone column found. Expected: phone, phonenumber, number, mobile, or tel',
+        message:
+          'No phone column found. Expected: phone, phonenumber, number, mobile, or tel',
       });
     }
 

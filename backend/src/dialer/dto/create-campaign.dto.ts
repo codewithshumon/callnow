@@ -1,4 +1,12 @@
-import { IsString, IsOptional, IsInt, Min, Max, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsInt,
+  Min,
+  Max,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class ContactCsvRow {

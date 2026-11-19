@@ -37,7 +37,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       const exceptionResponse = exception.getResponse();
 
       if (typeof exceptionResponse === 'string') {
-        errorBody = { code: this.statusToCode(status), message: exceptionResponse };
+        errorBody = {
+          code: this.statusToCode(status),
+          message: exceptionResponse,
+        };
       } else if (typeof exceptionResponse === 'object') {
         const resp = exceptionResponse as Record<string, unknown>;
         // Handle class-validator errors (array of validation errors)
@@ -52,17 +55,26 @@ export class HttpExceptionFilter implements ExceptionFilter {
           ...(field ? { field } : {}),
         };
       } else {
-        errorBody = { code: this.statusToCode(status), message: exception.message };
+        errorBody = {
+          code: this.statusToCode(status),
+          message: exception.message,
+        };
       }
     } else {
       // Non-HttpException: internal server error
       status = HttpStatus.INTERNAL_SERVER_ERROR;
-      const message =
-        exception instanceof Error ? exception.message : 'Internal server error';
-      errorBody = { code: 'INTERNAL_ERROR', message };
+      const rawMessage =
+        exception instanceof Error
+          ? exception.message
+          : 'Internal server error';
+
+      // Prevent internal error details/stack traces leaking in production
+      const isProd = process.env.NODE_ENV === 'production';
+      const clientMessage = isProd ? 'Internal server error' : rawMessage;
+      errorBody = { code: 'INTERNAL_ERROR', message: clientMessage };
 
       this.logger.error(
-        `Unhandled exception: ${message}`,
+        `Unhandled exception: ${rawMessage}`,
         exception instanceof Error ? exception.stack : undefined,
       );
     }

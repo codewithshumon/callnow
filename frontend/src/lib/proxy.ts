@@ -70,7 +70,9 @@ export async function proxyToBackend(
 
   // ── Special: inject refresh_token cookie into body for /auth/refresh ──
   if (path === "/auth/refresh") {
-    const refreshToken = cookieStore.get("refresh_token")?.value;
+    const refreshToken =
+      cookieStore.get("refresh_token")?.value ||
+      (options.body as any)?.refreshToken;
     if (refreshToken) {
       options.body = { ...(options.body as any), refreshToken };
     }
@@ -88,18 +90,53 @@ export async function proxyToBackend(
   // in-memory copies for UI state (isAuthenticated, etc.).
   const isAuthEndpoint = AUTH_ENDPOINTS.some((ep) => path.startsWith(ep));
   const setCookieHeaders: string[] = [];
+  const isSecure =
+    process.env.NODE_ENV === "production" ||
+    process.env.COOKIE_SECURE === "true";
+  const secureSuffix = isSecure ? "; Secure" : "";
 
   if (isAuthEndpoint && data?.data) {
     if (data.data.accessToken) {
+      try {
+        cookieStore.set("access_token", data.data.accessToken, {
+          httpOnly: true,
+          sameSite: "lax",
+          secure: isSecure,
+          maxAge: ACCESS_TTL,
+          path: "/",
+        });
+      } catch {}
       setCookieHeaders.push(
-        `access_token=${data.data.accessToken}; HttpOnly; SameSite=Lax; Max-Age=${ACCESS_TTL}; Path=/`,
+        `access_token=${data.data.accessToken}; HttpOnly; SameSite=Lax; Max-Age=${ACCESS_TTL}; Path=/${secureSuffix}`,
       );
     }
     if (data.data.refreshToken) {
+      try {
+        cookieStore.set("refresh_token", data.data.refreshToken, {
+          httpOnly: true,
+          sameSite: "lax",
+          secure: isSecure,
+          maxAge: REFRESH_TTL,
+          path: "/",
+        });
+      } catch {}
       setCookieHeaders.push(
-        `refresh_token=${data.data.refreshToken}; HttpOnly; SameSite=Lax; Max-Age=${REFRESH_TTL}; Path=/`,
+        `refresh_token=${data.data.refreshToken}; HttpOnly; SameSite=Lax; Max-Age=${REFRESH_TTL}; Path=/${secureSuffix}`,
       );
     }
+  }
+
+  if (path === "/auth/logout") {
+    try {
+      cookieStore.delete("access_token");
+      cookieStore.delete("refresh_token");
+    } catch {}
+    setCookieHeaders.push(
+      `access_token=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/${secureSuffix}`,
+    );
+    setCookieHeaders.push(
+      `refresh_token=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/${secureSuffix}`,
+    );
   }
 
   // Use array form to support multiple Set-Cookie headers

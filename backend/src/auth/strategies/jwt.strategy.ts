@@ -8,6 +8,8 @@ export interface JwtPayload {
   sub: string; // userId
   email: string;
   role: string;
+  step?: string;
+  type?: string;
 }
 
 @Injectable()
@@ -19,12 +21,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey:
-        configService.get<string>('jwt.accessSecret') || 'change-me',
+      secretOrKey: configService.get<string>('jwt.accessSecret') || 'change-me',
     });
   }
 
   async validate(payload: JwtPayload) {
+    // Prevent 2FA bypass: reject intermediate login tokens
+    if (payload.step === '2fa' || (payload.type && payload.type !== 'access')) {
+      throw new UnauthorizedException('Incomplete authentication: 2FA required');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
       select: { id: true, email: true, role: true },

@@ -78,7 +78,11 @@ export class ContactsService {
     const contact = await this.prisma.contact.findFirst({
       where: { id: contactId, userId },
     });
-    if (!contact) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Contact not found' });
+    if (!contact)
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Contact not found',
+      });
 
     // Sync phones: delete old, create new
     if (dto.phones !== undefined) {
@@ -112,7 +116,11 @@ export class ContactsService {
     const contact = await this.prisma.contact.findFirst({
       where: { id: contactId, userId },
     });
-    if (!contact) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Contact not found' });
+    if (!contact)
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Contact not found',
+      });
 
     await this.prisma.contact.delete({ where: { id: contactId } });
     return { message: 'Contact deleted' };
@@ -120,11 +128,21 @@ export class ContactsService {
 
   // 7.1.6 — Import contacts from CSV
   async importContacts(userId: string, csvBuffer: Buffer) {
+    if (!csvBuffer || csvBuffer.length === 0) {
+      return { imported: 0, skipped: 0, total: 0 };
+    }
+
+    // Protect against memory exhaustion: 5MB limit
+    if (csvBuffer.length > 5 * 1024 * 1024) {
+      throw new Error('CSV file exceeds maximum allowed size (5MB)');
+    }
+
     const csvString = csvBuffer.toString('utf-8');
     const records = parse(csvString, {
       columns: true,
       skip_empty_lines: true,
       trim: true,
+      to: 10000, // Limit maximum records per upload to prevent DoS
     });
 
     let imported = 0;
@@ -138,13 +156,21 @@ export class ContactsService {
         continue;
       }
 
+      // Neutralize potential formula injection strings
+      const sanitizeString = (s?: string | null) => {
+        if (!s) return null;
+        return /^[=\+\-@\t\r]/.test(s) ? `'${s}` : s;
+      };
+
       await this.prisma.contact.create({
         data: {
           userId,
-          name: row.name || 'Unknown',
-          email: row.email || null,
-          notes: row.notes || null,
-          tags: row.tags ? row.tags.split(',').map((t: string) => t.trim()) : [],
+          name: sanitizeString(row.name) || 'Unknown',
+          email: sanitizeString(row.email),
+          notes: sanitizeString(row.notes),
+          tags: row.tags
+            ? row.tags.split(',').map((t: string) => t.trim())
+            : [],
           phones: {
             create: [{ number: phone, label: row.label || 'mobile' }],
           },

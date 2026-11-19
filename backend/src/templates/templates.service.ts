@@ -28,7 +28,11 @@ export class TemplatesService {
     const tmpl = await this.prisma.messageTemplate.findFirst({
       where: { id: templateId, userId },
     });
-    if (!tmpl) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Template not found' });
+    if (!tmpl)
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Template not found',
+      });
 
     return this.prisma.messageTemplate.update({
       where: { id: templateId },
@@ -44,7 +48,11 @@ export class TemplatesService {
     const tmpl = await this.prisma.messageTemplate.findFirst({
       where: { id: templateId, userId },
     });
-    if (!tmpl) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Template not found' });
+    if (!tmpl)
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Template not found',
+      });
     await this.prisma.messageTemplate.delete({ where: { id: templateId } });
     return { message: 'Template deleted' };
   }

@@ -20,14 +20,24 @@ export class RedisThrottlerStorage implements ThrottlerStorage {
     _limit: number,
     _blockDuration: number,
     _throttlerName: string,
-  ): Promise<{ isBlocked: boolean; timeToExpire: number; timeToBlockExpire: number; totalHits: number }> {
+  ): Promise<{
+    isBlocked: boolean;
+    timeToExpire: number;
+    timeToBlockExpire: number;
+    totalHits: number;
+  }> {
     const multi = this.redis.multi();
     multi.incr(key);
     multi.pttl(key);
 
     const results = await multi.exec();
     if (!results) {
-      return { isBlocked: false, timeToExpire: ttl, timeToBlockExpire: 0, totalHits: 1 };
+      return {
+        isBlocked: false,
+        timeToExpire: ttl,
+        timeToBlockExpire: 0,
+        totalHits: 1,
+      };
     }
 
     const totalHits = (results[0]?.[1] as number) ?? 1;

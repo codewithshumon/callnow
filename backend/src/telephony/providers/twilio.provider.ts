@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Twilio from 'twilio';
 import { twiml as TwilioTwiml } from 'twilio';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+
 const AccessToken = require('twilio/lib/jwt/AccessToken');
 const VoiceGrant = AccessToken.VoiceGrant;
 
@@ -24,7 +24,6 @@ import type {
   ProviderCallResult,
 } from '../interfaces/telephony-provider.interface';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type TwilioClient = any;
 
 /**
@@ -47,7 +46,6 @@ export class TwilioProvider implements TelephonyProvider {
   private readonly apiSecret: string;
   private readonly twimlAppSid?: string; // optional TwiML app for WebRTC
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private statusMap: Record<string, any>;
 
   constructor(private readonly configService: ConfigService) {
@@ -80,9 +78,27 @@ export class TwilioProvider implements TelephonyProvider {
     numberPorting: true,
     tollFreeNumbers: true,
     supportedCountries: [
-      'US', 'CA', 'GB', 'AU', 'IE', 'NZ', 'ZA',
-      'FR', 'DE', 'ES', 'IT', 'NL', 'SE', 'NO', 'DK', 'FI',
-      'JP', 'SG', 'HK', 'BR', 'MX',
+      'US',
+      'CA',
+      'GB',
+      'AU',
+      'IE',
+      'NZ',
+      'ZA',
+      'FR',
+      'DE',
+      'ES',
+      'IT',
+      'NL',
+      'SE',
+      'NO',
+      'DK',
+      'FI',
+      'JP',
+      'SG',
+      'HK',
+      'BR',
+      'MX',
     ],
   };
 
@@ -94,7 +110,6 @@ export class TwilioProvider implements TelephonyProvider {
   async searchAvailableNumbers(
     params: NumberSearchParams,
   ): Promise<AvailableNumber[]> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const searchOpts: any = { limit: params.limit || 20 };
 
     if (params.areaCode) {
@@ -216,7 +231,6 @@ export class TwilioProvider implements TelephonyProvider {
   /** 2.2.6 — Send SMS/MMS */
   async sendMessage(params: SendMessageParams): Promise<ProviderMessageResult> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const opts: any = {
         from: params.from,
         to: params.to,
@@ -285,7 +299,6 @@ export class TwilioProvider implements TelephonyProvider {
     params: OutboundCallParams,
   ): Promise<ProviderCallResult> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const callOpts: any = {
         from: params.from,
         to: params.to,
@@ -300,7 +313,10 @@ export class TwilioProvider implements TelephonyProvider {
         callOpts.statusCallback = params.statusCallback;
         callOpts.statusCallbackMethod = 'POST';
         callOpts.statusCallbackEvent = [
-          'initiated', 'ringing', 'answered', 'completed',
+          'initiated',
+          'ringing',
+          'answered',
+          'completed',
         ];
       }
 
@@ -319,10 +335,7 @@ export class TwilioProvider implements TelephonyProvider {
         status: call.status || 'queued',
       };
     } catch (error) {
-      this.logger.error(
-        `Failed to initiate call to ${params.to}`,
-        error,
-      );
+      this.logger.error(`Failed to initiate call to ${params.to}`, error);
       throw error;
     }
   }
@@ -392,9 +405,13 @@ export class TwilioProvider implements TelephonyProvider {
 
       // Twilio's validateRequest expects the raw URL and POST params
       // For a robust implementation, we need the full original URL
-      const url = (req.headers['x-forwarded-proto'] || 'https') + '://' +
-        (req.headers.host || 'localhost') +
-        ((req as unknown as { originalUrl?: string }).originalUrl || '/');
+      const proto = (req.headers['x-forwarded-proto'] as string) || 'https';
+      const host =
+        (req.headers['x-forwarded-host'] as string) ||
+        (req.headers.host as string) ||
+        'localhost';
+      const originalPath = req.originalUrl || '/';
+      const url = `${proto}://${host}${originalPath}`;
 
       const params: Record<string, string> = {};
       if (typeof req.body === 'string') {
@@ -411,12 +428,7 @@ export class TwilioProvider implements TelephonyProvider {
         }
       }
 
-      return Twilio.validateRequest(
-        this.authToken,
-        signature,
-        url,
-        params,
-      );
+      return Twilio.validateRequest(this.authToken, signature, url, params);
     } catch (error) {
       this.logger.error('Webhook signature validation failed', error);
       return false;
@@ -424,13 +436,9 @@ export class TwilioProvider implements TelephonyProvider {
   }
 
   /** 2.2.11 — Parse inbound SMS webhook into normalized shape */
-  parseInboundMessageWebhook(
-    req: RawWebhookRequest,
-  ): NormalizedInboundMessage {
+  parseInboundMessageWebhook(req: RawWebhookRequest): NormalizedInboundMessage {
     const body =
-      typeof req.body === 'object' && req.body !== null
-        ? req.body
-        : {};
+      typeof req.body === 'object' && req.body !== null ? req.body : {};
 
     const numMedia = parseInt(String(body.NumMedia ?? '0'), 10);
     const mediaUrls: string[] = [];
@@ -452,9 +460,7 @@ export class TwilioProvider implements TelephonyProvider {
   /** 2.2.12 — Parse inbound call webhook into normalized shape */
   parseInboundCallWebhook(req: RawWebhookRequest): NormalizedInboundCall {
     const body =
-      typeof req.body === 'object' && req.body !== null
-        ? req.body
-        : {};
+      typeof req.body === 'object' && req.body !== null ? req.body : {};
 
     return {
       providerCallSid: String(body.CallSid ?? ''),
@@ -467,17 +473,13 @@ export class TwilioProvider implements TelephonyProvider {
   /** 2.2.13 — Parse status callback into normalized shape */
   parseStatusCallback(req: RawWebhookRequest): NormalizedStatusEvent {
     const body =
-      typeof req.body === 'object' && req.body !== null
-        ? req.body
-        : {};
+      typeof req.body === 'object' && req.body !== null ? req.body : {};
 
     const isCall = 'CallSid' in body;
     const resourceType: 'message' | 'call' = isCall ? 'call' : 'message';
-    const providerSid = String(
-      isCall ? body.CallSid : body.MessageSid ?? '',
-    );
+    const providerSid = String(isCall ? body.CallSid : (body.MessageSid ?? ''));
     const rawStatus = String(
-      isCall ? body.CallStatus : body.MessageStatus ?? body.SmsStatus ?? '',
+      isCall ? body.CallStatus : (body.MessageStatus ?? body.SmsStatus ?? ''),
     );
 
     // Normalize status via the status map
@@ -517,11 +519,10 @@ export class TwilioProvider implements TelephonyProvider {
   /** 2.2.15 — Transcribe recording using Twilio's built-in API */
   async transcribeRecording(providerRecordingSid: string): Promise<string> {
     try {
-      const transcriptions = await this.client
-        .transcriptions.list({
-          recordingSid: providerRecordingSid,
-          limit: 1,
-        });
+      const transcriptions = await this.client.transcriptions.list({
+        recordingSid: providerRecordingSid,
+        limit: 1,
+      });
 
       if (transcriptions.length > 0 && transcriptions[0].transcriptionText) {
         return transcriptions[0].transcriptionText;
@@ -547,7 +548,7 @@ export class TwilioProvider implements TelephonyProvider {
   private loadStatusMap(): Record<string, Record<string, string>> {
     try {
       // Dynamic require — JSON maps are loaded at runtime
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
+
       return require('../status-maps/twilio.json');
     } catch {
       this.logger.warn('Status map not found — using empty map');

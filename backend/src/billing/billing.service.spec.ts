@@ -25,10 +25,21 @@ describe('BillingService', () => {
 
   it('should return usage with plan limits', async () => {
     mockPrisma.usageRecord.findUnique.mockResolvedValue({
-      minutesUsed: 100, smsSent: 50, mmsSent: 0, numbersHeld: 1, smsReceived: 10, mmsReceived: 0,
+      minutesUsed: 100,
+      smsSent: 50,
+      mmsSent: 0,
+      numbersHeld: 1,
+      smsReceived: 10,
+      mmsReceived: 0,
     });
     mockPrisma.subscription.findUnique.mockResolvedValue({
-      plan: { name: 'Pro', includedMinutes: 1000, includedSms: 2000, includedMms: 100, maxNumbers: 5 },
+      plan: {
+        name: 'Pro',
+        includedMinutes: 1000,
+        includedSms: 2000,
+        includedMms: 100,
+        maxNumbers: 5,
+      },
     });
 
     const result = await service.getCurrentUsage('u1');

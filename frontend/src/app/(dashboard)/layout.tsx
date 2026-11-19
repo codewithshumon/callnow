@@ -21,8 +21,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const wsConnected = useRef(false);
   const webrtcInitialized = useRef(false);
 
+  // Ensure loading finishes on client mount
+  useEffect(() => {
+    if (isLoading) {
+      useAuthStore.getState().setLoading(false);
+    }
+  }, []);
+
   // ── Auth guard ──────────────────────────────────────────
-  // On mount with no in-memory tokens, try refreshing via cookie.
+  // On mount with no in-memory tokens, try refreshing via cookie/store.
   // If it fails, redirect to login.
   useEffect(() => {
     if (isLoading) return;
@@ -43,7 +50,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     if (!user && !isLoading) {
       router.replace("/login");
     }
-  }, [user, accessToken, isLoading]);
+  }, [user, accessToken, isLoading, refreshSession, router]);
 
   // ── WebSocket connection ────────────────────────────────
   useEffect(() => {
@@ -92,13 +99,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     }
   }, [accessToken]);
 
-  if (isLoading) return null;
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
   if (!user) return null; // auth guard redirects
 
   return (
-    <div className="flex min-h-full">
+    <div className="flex min-h-full w-full">
       <Sidebar />
-      <main className="flex-1 lg:pl-60">{children}</main>
+      <main className="flex-1 lg:pl-72 w-full min-w-0">{children}</main>
       <InboundCallOverlay />
       <ActiveCallBar />
     </div>

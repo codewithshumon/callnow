@@ -3,7 +3,18 @@ import type { Server } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 
-@WebSocketGateway({ namespace: '/ws', cors: true })
+@WebSocketGateway({
+  namespace: '/ws',
+  cors: {
+    origin: (
+      process.env.CORS_ORIGIN ||
+      'http://localhost:3000,http://localhost:8000,http://localhost:3001'
+    )
+      .split(',')
+      .map((o) => o.trim()),
+    credentials: true,
+  },
+})
 export class CallingGateway {
   @WebSocketServer()
   server: Server;

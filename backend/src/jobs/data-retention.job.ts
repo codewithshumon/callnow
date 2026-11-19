@@ -17,13 +17,19 @@ export class DataRetentionJob {
 
     // Messages: purge older than 2 years
     const msgResult = await this.prisma.message.deleteMany({
-      where: { createdAt: { lt: new Date(now.getFullYear() - 2, now.getMonth(), now.getDate()) } },
+      where: {
+        createdAt: {
+          lt: new Date(now.getFullYear() - 2, now.getMonth(), now.getDate()),
+        },
+      },
     });
     this.logger.log(`Purged ${msgResult.count} messages`);
 
     // Voicemails: purge older than 90 days (standard)
     const vmResult = await this.prisma.voicemail.deleteMany({
-      where: { createdAt: { lt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) } },
+      where: {
+        createdAt: { lt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) },
+      },
     });
     this.logger.log(`Purged ${vmResult.count} voicemails`);
 

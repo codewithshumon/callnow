@@ -28,10 +28,14 @@ export class UsageAlertJob {
       });
       if (!usage) continue;
 
-      const smsPct = sub.plan.includedSms > 0
-        ? (usage.smsSent / sub.plan.includedSms) * 100 : 0;
-      const minPct = sub.plan.includedMinutes > 0
-        ? (usage.minutesUsed / sub.plan.includedMinutes) * 100 : 0;
+      const smsPct =
+        sub.plan.includedSms > 0
+          ? (usage.smsSent / sub.plan.includedSms) * 100
+          : 0;
+      const minPct =
+        sub.plan.includedMinutes > 0
+          ? (usage.minutesUsed / sub.plan.includedMinutes) * 100
+          : 0;
 
       if (smsPct >= 80 || minPct >= 80) {
         this.logger.log(

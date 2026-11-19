@@ -8,7 +8,7 @@
  * Run a callback within a Prisma interactive transaction.
  * Pass the PrismaService instance and a callback receiving the transaction client.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export async function transaction<T>(
   prisma: any,
   fn: (tx: any) => Promise<T>,
@@ -43,11 +43,7 @@ export function paginationParams(params: PaginationParams = {}) {
 /**
  * Build paginated response meta.
  */
-export function paginatedMeta(
-  total: number,
-  page: number,
-  limit: number,
-) {
+export function paginatedMeta(total: number, page: number, limit: number) {
   return {
     page,
     limit,

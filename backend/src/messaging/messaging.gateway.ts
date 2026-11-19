@@ -18,7 +18,18 @@ import { OnEvent } from '@nestjs/event-emitter';
  *
  * Ref: SDD §3.3, SDD §6.1, API §WebSocket Events
  */
-@WebSocketGateway({ namespace: '/ws', cors: true })
+@WebSocketGateway({
+  namespace: '/ws',
+  cors: {
+    origin: (
+      process.env.CORS_ORIGIN ||
+      'http://localhost:3000,http://localhost:8000,http://localhost:3001'
+    )
+      .split(',')
+      .map((o) => o.trim()),
+    credentials: true,
+  },
+})
 export class MessagingGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
@@ -49,6 +60,13 @@ export class MessagingGateway
         secret:
           this.configService.get<string>('jwt.accessSecret') || 'change-me',
       });
+
+      // Reject partial 2FA login tokens
+      if (payload.step === '2fa') {
+        this.logger.warn(`WebSocket: rejected 2FA login token from ${client.id}`);
+        client.disconnect();
+        return;
+      }
 
       const userId = payload.sub;
       if (!userId) {

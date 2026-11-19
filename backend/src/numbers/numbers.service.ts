@@ -7,25 +7,18 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import type { TelephonyProvider } from '../telephony/interfaces/telephony-provider.interface';
 import { TELEPHONY_PROVIDER } from '../telephony/telephony.module';
-import Redis from 'ioredis';
-import { ConfigService } from '@nestjs/config';
+import { RedisService } from '../redis/redis.service';
 
 const NUMBER_USER_CACHE_TTL = 24 * 60 * 60; // SDD §9: 24h TTL
 
 @Injectable()
 export class NumbersService {
-  private readonly redis: Redis;
-
   constructor(
     private readonly prisma: PrismaService,
     @Inject(TELEPHONY_PROVIDER)
     private readonly telephonyProvider: TelephonyProvider,
-    configService: ConfigService,
-  ) {
-    this.redis = new Redis(
-      configService.get<string>('redis.url') || 'redis://localhost:6383',
-    );
-  }
+    private readonly redis: RedisService,
+  ) {}
 
   // 4.1.2 — Get user's numbers
   async getMyNumbers(userId: string) {

@@ -69,11 +69,8 @@ export class CallingController {
     @Param('id') id: string,
     @Res() res: Response,
   ) {
-    const { url } = await this.callingService.getVoicemailRecording(
-      userId,
-      id,
-    );
-    if (!url) {
+    const { url } = await this.callingService.getVoicemailRecording(userId, id);
+    if (!url || (!url.startsWith('https://') && !url.startsWith('http://'))) {
       throw new NotFoundException({
         code: 'NOT_FOUND',
         message: 'Recording not available',

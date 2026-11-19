@@ -15,6 +15,7 @@ import { TELEPHONY_PROVIDER } from '../../telephony/telephony.module';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NumbersService } from '../../numbers/numbers.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Public } from '../../common/decorators/public.decorator';
 
 /**
  * SMS/MMS webhook controller — handles inbound messages and status callbacks.
@@ -25,6 +26,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
  * Ref: SDD §3.4, PAL §5, URD UC-03
  */
 @Controller('webhooks')
+@Public()
 export class SmsWebhookController {
   private readonly logger = new Logger(SmsWebhookController.name);
 
@@ -45,7 +47,7 @@ export class SmsWebhookController {
   ) {
     const rawReq: RawWebhookRequest = {
       body: req.body as Record<string, unknown>,
-      headers: req.headers as Record<string, string | string[] | undefined>,
+      headers: req.headers,
       rawBody: (req as unknown as { rawBody?: Buffer }).rawBody,
     };
 
@@ -155,7 +157,7 @@ export class SmsWebhookController {
   ) {
     const rawReq: RawWebhookRequest = {
       body: req.body as Record<string, unknown>,
-      headers: req.headers as Record<string, string | string[] | undefined>,
+      headers: req.headers,
     };
 
     const normalized = this.telephonyProvider.parseStatusCallback(rawReq);

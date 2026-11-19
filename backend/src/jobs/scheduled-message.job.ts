@@ -28,23 +28,34 @@ export class ScheduledMessageJob {
         direction: 'outbound',
         body: { not: null },
       },
+      include: {
+        conversation: true,
+      },
       take: 100,
     });
 
     for (const msg of pending) {
+      if (!msg.conversation) continue;
+
       try {
-        await this.telephonyProvider.sendMessage({
-          from: '', // would be populated from conversation/owned numbers
-          to: '',   // would be populated from conversation
+        const result = await this.telephonyProvider.sendMessage({
+          from: msg.conversation.fromNumber,
+          to: msg.conversation.toNumber,
           body: msg.body || '',
+          mediaUrls: msg.mediaUrls,
         });
 
         await this.prisma.message.update({
           where: { id: msg.id },
-          data: { status: 'sent' },
+          data: {
+            status: 'sent',
+            providerSid: result.providerSid,
+          },
         });
-      } catch (error) {
-        this.logger.error(`Scheduled message ${msg.id} failed`, error);
+      } catch (error: any) {
+        this.logger.error(
+          `Scheduled message ${msg.id} failed: ${error.message}`,
+        );
         await this.prisma.message.update({
           where: { id: msg.id },
           data: { status: 'failed', errorCode: 'SCHEDULED_SEND_FAILED' },

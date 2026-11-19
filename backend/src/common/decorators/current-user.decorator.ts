@@ -25,10 +25,13 @@ export interface JwtUser {
  * Ref: SDD §3.1 (common/decorators/)
  */
 export const CurrentUser = createParamDecorator(
-  (data: keyof JwtUser | undefined, ctx: ExecutionContext): JwtUser | string => {
-    const request = ctx.switchToHttp().getRequest<
-      Request & { user?: JwtUser }
-    >();
+  (
+    data: keyof JwtUser | undefined,
+    ctx: ExecutionContext,
+  ): JwtUser | string => {
+    const request = ctx
+      .switchToHttp()
+      .getRequest<Request & { user?: JwtUser }>();
     const user = request.user;
 
     if (!user) {

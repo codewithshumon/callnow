@@ -10,6 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ContactsService } from './contacts.service';
@@ -71,6 +72,12 @@ export class ContactsController {
     @CurrentUser('id') userId: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
+    if (!file || !file.buffer) {
+      throw new BadRequestException({
+        code: 'VALIDATION_ERROR',
+        message: 'CSV file is required',
+      });
+    }
     return this.contactsService.importContacts(userId, file.buffer);
   }
 }

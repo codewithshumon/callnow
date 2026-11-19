@@ -1,0 +1,26 @@
+{
+  "message": {
+    "queued": "queued",
+    "sending": "sent",
+    "sent": "sent",
+    "delivered": "delivered",
+    "undelivered": "failed",
+    "failed": "failed",
+    "received": "delivered"
+  },
+  "call": {
+    "call.initiated": "initiated",
+    "call.ringing": "ringing",
+    "call.answered": "in-progress",
+    "call.hangup": "completed",
+    "call.machine.detection.ended": "in-progress",
+    "initiated": "initiated",
+    "ringing": "ringing",
+    "answered": "in-progress",
+    "completed": "completed",
+    "busy": "busy",
+    "failed": "failed",
+    "no_answer": "no-answer",
+    "canceled": "failed"
+  }
+}

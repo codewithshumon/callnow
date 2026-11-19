@@ -10,7 +10,11 @@ export class ApiKeysService {
   constructor(private readonly prisma: PrismaService) {}
 
   // 11.1.2 — Create API key (return plaintext only once)
-  async createApiKey(userId: string, name: string, scopes: string[] = ['sms:send', 'calls:read']) {
+  async createApiKey(
+    userId: string,
+    name: string,
+    scopes: string[] = ['sms:send', 'calls:read'],
+  ) {
     const rawKey = API_KEY_PREFIX + crypto.randomBytes(32).toString('hex');
     const keyHash = await bcrypt.hash(rawKey, 12);
     const keyPrefix = rawKey.substring(0, 8);
@@ -19,7 +23,8 @@ export class ApiKeysService {
       data: { userId, name, keyPrefix, keyHash, scopes },
     });
 
-    return { ...apiKey, rawKey }; // Return raw key ONLY on creation
+    const { keyHash: _, ...safeApiKey } = apiKey;
+    return { ...safeApiKey, rawKey }; // Return raw key ONLY on creation; never expose hash
   }
 
   // 11.1.3 — List keys (never show hash)
@@ -45,7 +50,11 @@ export class ApiKeysService {
     const key = await this.prisma.apiKey.findFirst({
       where: { id: keyId, userId },
     });
-    if (!key) throw new NotFoundException({ code: 'NOT_FOUND', message: 'API key not found' });
+    if (!key)
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'API key not found',
+      });
 
     await this.prisma.apiKey.update({
       where: { id: keyId },
