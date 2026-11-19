@@ -246,7 +246,7 @@ function showToast(type: "error", message: string): void {
   // or use a dynamic import for sonner
   if (typeof window !== "undefined") {
     window.dispatchEvent(
-      new CustomEvent("voicelink:toast", {
+      new CustomEvent("voiceseek:toast", {
         detail: { type, message },
       })
     );

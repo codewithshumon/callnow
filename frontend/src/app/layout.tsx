@@ -7,11 +7,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "VoiceLink — International Calling & Messaging",
-    template: "%s | VoiceLink",
+    default: "VoiceSeek — International Calling & Messaging",
+    template: "%s | VoiceSeek",
   },
   description:
-    "VoiceLink enables international calling, SMS/MMS messaging, and automated power dialing — all from your browser. No SIM required.",
+    "VoiceSeek enables international calling, SMS/MMS messaging, and automated power dialing — all from your browser. No SIM required.",
   keywords: [
     "VoIP",
     "international calling",
@@ -20,12 +20,12 @@ export const metadata: Metadata = {
     "power dialer",
     "WebRTC",
   ],
-  authors: [{ name: "VoiceLink" }],
+  authors: [{ name: "VoiceSeek" }],
   openGraph: {
     type: "website",
     locale: "en_US",
-    siteName: "VoiceLink",
-    title: "VoiceLink — International Calling & Messaging Platform",
+    siteName: "VoiceSeek",
+    title: "VoiceSeek — International Calling & Messaging Platform",
     description:
       "Make international calls, send SMS, and run power dialer campaigns from your browser.",
   },

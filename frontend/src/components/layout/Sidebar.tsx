@@ -38,7 +38,7 @@ export default function Sidebar() {
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-2 px-4 py-3 font-semibold text-lg">
               <PhoneIcon />
-              VoiceLink
+              VoiceSeek
             </div>
             <div className="flex-1 overflow-auto py-2">
               <SidebarNav onNavigate={() => setMobileOpen(false)} />
@@ -54,7 +54,7 @@ export default function Sidebar() {
       <aside className="fixed bottom-0 left-0 top-0 z-40 hidden w-60 border-r bg-background lg:flex lg:flex-col">
         <div className="flex items-center gap-2 px-4 py-4 font-semibold text-lg">
           <PhoneIcon />
-          VoiceLink
+          VoiceSeek
         </div>
         <div className="flex-1 overflow-auto py-2">
           <SidebarNav />

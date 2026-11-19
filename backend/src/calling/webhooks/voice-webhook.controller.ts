@@ -47,8 +47,54 @@ export class VoiceWebhookController {
   ) {
     const raw = this.toRaw(req);
     const normalized = this.telephonyProvider.parseInboundCallWebhook(raw);
+    const body = (req.body || {}) as Record<string, string>;
 
-    // Lookup owner by the "to" number
+    // Check if this is an outbound call initiated by a WebRTC client
+    const isOutboundClientCall =
+      (body.From && body.From.startsWith('client:')) ||
+      (body.Caller && body.Caller.startsWith('client:')) ||
+      Boolean(body.to && body.to !== normalized.to);
+
+    if (isOutboundClientCall) {
+      const destination = body.to || body.To;
+      const callerId = body.from || body.callerId || body.CallerId;
+      let userId: string | null = null;
+
+      if (body.From && body.From.startsWith('client:')) {
+        userId = body.From.replace('client:', '');
+      }
+      if (!userId && callerId) {
+        userId = await this.numbersService.getUserByNumber(callerId);
+      }
+
+      if (userId && destination) {
+        try {
+          await this.prisma.call.create({
+            data: {
+              userId,
+              providerCallSid: normalized.providerCallSid,
+              provider: this.telephonyProvider.name,
+              fromNumber: callerId || 'anonymous',
+              toNumber: destination,
+              direction: 'outbound',
+              status: 'initiated',
+              startedAt: new Date(),
+            },
+          });
+        } catch (err) {
+          this.logger.warn(`Failed to create outbound CDR: ${err}`);
+        }
+      }
+
+      return this.telephonyProvider.generateCallControlResponse({
+        type: 'dial-number',
+        number: destination,
+        callerId: callerId,
+        timeout: 30,
+      });
+    }
+
+    // Lookup owner by the "to" number (inbound call)
     const ownerId = await this.numbersService.getUserByNumber(normalized.to);
 
     if (!ownerId) {

@@ -1,5 +1,5 @@
 # Software Requirements Specification (SRS)
-## VoiceLink — International Calling & Messaging Platform
+## VoiceSeek — International Calling & Messaging Platform
 
 | Field | Detail |
 |---|---|
@@ -29,11 +29,11 @@
 
 ### 1.1 Purpose
 
-This SRS defines the complete software requirements for VoiceLink, a web and mobile-compatible platform enabling international calling, SMS/MMS messaging, and automated power dialing. It serves as the binding technical contract between stakeholders, developers, and QA teams.
+This SRS defines the complete software requirements for VoiceSeek, a web and mobile-compatible platform enabling international calling, SMS/MMS messaging, and automated power dialing. It serves as the binding technical contract between stakeholders, developers, and QA teams.
 
 ### 1.2 Scope
 
-VoiceLink allows users to:
+VoiceSeek allows users to:
 
 - Register a virtual phone number (USA, Canada, UK, Australia, and other English-speaking regions)
 - Send and receive SMS/MMS messages internationally
@@ -54,11 +54,11 @@ VoiceLink allows users to:
 | CDR | Call Detail Record — log of a completed call |
 | E.164 | International phone number format standard (e.g., +14155551234) |
 | TTS | Text-to-Speech — automated voice generation |
-| PAL | Telephony Provider Abstraction Layer — VoiceLink's provider-agnostic interface for all telephony operations |
+| PAL | Telephony Provider Abstraction Layer — VoiceSeek's provider-agnostic interface for all telephony operations |
 
 ### 1.4 References
 
-- VoiceLink Telephony Provider Abstraction Layer (PAL) Addendum v1.0
+- VoiceSeek Telephony Provider Abstraction Layer (PAL) Addendum v1.0
 - WebRTC W3C Specification: https://www.w3.org/TR/webrtc/
 - RFC 3261 — SIP Protocol
 - GDPR Regulation (EU) 2016/679
@@ -70,7 +70,7 @@ VoiceLink allows users to:
 
 ### 2.1 Product Perspective
 
-VoiceLink is a standalone SaaS platform. It communicates with telephony providers via the PAL for PSTN connectivity, and uses WebRTC for browser-based calling. It does not require users to install native apps — everything runs in the browser.
+VoiceSeek is a standalone SaaS platform. It communicates with telephony providers via the PAL for PSTN connectivity, and uses WebRTC for browser-based calling. It does not require users to install native apps — everything runs in the browser.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -296,7 +296,7 @@ Business users can upload a CSV file of phone numbers and run automated dialing 
 ### 4.2 API Interface
 
 - The NestJS backend shall expose a RESTful API versioned under `/api/v1/`
-- WebSocket connections shall be established at `wss://api.voicelink.io/ws`
+- WebSocket connections shall be established at `wss://api.voiceseek.io/ws`
 - All API responses shall follow the JSON:API structure
 - The API shall be documented via OpenAPI 3.0 (auto-generated via Swagger)
 

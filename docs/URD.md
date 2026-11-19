@@ -1,5 +1,5 @@
 # User Requirements Document (URD)
-## VoiceLink — International Calling & Messaging Platform
+## VoiceSeek — International Calling & Messaging Platform
 
 | Field | Detail |
 |---|---|
@@ -25,11 +25,11 @@
 
 ### 1.1 Purpose
 
-This URD captures what real users need from VoiceLink — written from the user's perspective, not the system's. Where the SRS defines *what the system shall do*, this document defines *why users need it* and *how they expect to experience it*.
+This URD captures what real users need from VoiceSeek — written from the user's perspective, not the system's. Where the SRS defines *what the system shall do*, this document defines *why users need it* and *how they expect to experience it*.
 
 ### 1.2 Background
 
-Users need to communicate internationally without paying carrier international rates. Businesses need to contact leads at scale without expensive dialing hardware or software. VoiceLink solves both problems in a single browser-based platform.
+Users need to communicate internationally without paying carrier international rates. Businesses need to contact leads at scale without expensive dialing hardware or software. VoiceSeek solves both problems in a single browser-based platform.
 
 ### 1.3 How to Read This Document
 
@@ -102,7 +102,7 @@ Priya runs a small e-commerce business. She wants a dedicated business number fo
 
 > **Age:** 27 | **Location:** Remote | **Tech Level:** Expert
 
-A developer integrating VoiceLink into their company's internal tooling. They need programmatic access to send SMS and trigger calls via API.
+A developer integrating VoiceSeek into their company's internal tooling. They need programmatic access to send SMS and trigger calls via API.
 
 **Goals:**
 - Simple, well-documented REST API
@@ -135,13 +135,13 @@ A developer integrating VoiceLink into their company's internal tooling. They ne
 | US-013 | As a user, I want to see what capabilities (SMS, voice, MMS) a number has before I buy it so there are no surprises | Must Have |
 | US-014 | As a user, I want to release a number I no longer need so I stop being billed for it | Must Have |
 | US-015 | As a Business user, I want to hold multiple numbers so different team members or campaigns can have their own number | Should Have |
-| US-016 | As a user, I want to port my existing phone number to VoiceLink so I don't have to change my number | Nice to Have |
+| US-016 | As a user, I want to port my existing phone number to VoiceSeek so I don't have to change my number | Nice to Have |
 
 ### 3.3 Messaging
 
 | ID | Story | Priority |
 |---|---|---|
-| US-020 | As Sarah, I want to send an SMS to any phone number from my VoiceLink number so I can message clients | Must Have |
+| US-020 | As Sarah, I want to send an SMS to any phone number from my VoiceSeek number so I can message clients | Must Have |
 | US-021 | As Priya, I want to see inbound SMS appear instantly in my browser so I don't miss customer messages | Must Have |
 | US-022 | As a user, I want to see whether my sent message was delivered so I know it reached the recipient | Must Have |
 | US-023 | As a user, I want to send a photo or document via MMS so I can share files without email | Should Have |
@@ -154,7 +154,7 @@ A developer integrating VoiceLink into their company's internal tooling. They ne
 | ID | Story | Priority |
 |---|---|---|
 | US-030 | As Sarah, I want to call any US or UK number from my browser so I don't need my phone nearby | Must Have |
-| US-031 | As a user, I want my browser to ring when someone calls my VoiceLink number so I never miss a call | Must Have |
+| US-031 | As a user, I want my browser to ring when someone calls my VoiceSeek number so I never miss a call | Must Have |
 | US-032 | As a user, I want to put a call on hold so I can look something up without hanging up | Must Have |
 | US-033 | As a user, I want missed calls to go to voicemail with a custom greeting so callers can leave a message | Must Have |
 | US-034 | As a user, I want to read a text transcript of my voicemail so I can understand messages without playing audio | Should Have |
@@ -261,7 +261,7 @@ A developer integrating VoiceLink into their company's internal tooling. They ne
 
 **Actor:** Priya (Small Business Owner)
 **Preconditions:** Priya is logged in. A customer has her business number.
-**Trigger:** A customer sends an SMS to Priya's VoiceLink number
+**Trigger:** A customer sends an SMS to Priya's VoiceSeek number
 
 **Main Flow:**
 1. Customer sends SMS to Priya's number

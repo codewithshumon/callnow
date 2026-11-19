@@ -1,9 +1,9 @@
-# VoiceLink Next.js Frontend — Complete Task List
+# VoiceSeek Next.js Frontend — Complete Task List
 
 > **Derived from:** SDD §2, URD Use Cases & Journey Maps, API Reference, PAL §9, SRS §4.1
 > **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Zustand · TanStack Query
 > **Current state:** Default Next.js template (`page.tsx` with "To get started")
-> **Target:** Complete production-ready VoiceLink web app
+> **Target:** Complete production-ready VoiceSeek web app
 
 ---
 
@@ -37,9 +37,9 @@
 
 ### 0.3 — Base Layout & Theme
 
-- [ ] **0.3.1** Update [layout.tsx](view/src/app/layout.tsx) — metadata title "VoiceLink", add `ThemeProvider`, `QueryClientProvider`, `Toaster`
+- [ ] **0.3.1** Update [layout.tsx](view/src/app/layout.tsx) — metadata title "VoiceSeek", add `ThemeProvider`, `QueryClientProvider`, `Toaster`
 - [ ] **0.3.2** Set up Tailwind CSS 4 theme — colors, fonts (Inter/Geist), dark mode via `class` strategy
-- [ ] **0.3.3** Create `globals.css` — Tailwind directives + custom properties for VoiceLink brand colors
+- [ ] **0.3.3** Create `globals.css` — Tailwind directives + custom properties for VoiceSeek brand colors
 - [ ] **0.3.4** Create responsive breakpoint strategy — mobile 375px → desktop 2560px (SRS §4.1)
 
 **Refs:** SRS §4.1, SDD §2.4
@@ -86,7 +86,7 @@
   - `User`, `PhoneNumber`, `Conversation`, `Message`, `Call`, `Voicemail`, `Contact`, `Campaign`, `CampaignContact`, `Plan`, `Subscription`, `Invoice`, `UsageRecord`
   - API envelope types: `ApiResponse<T>`, `PaginatedResponse<T>`
   - WebSocket event types per API §WebSocket Events
-  - `CallStatus`, `MessageStatus` enums (VoiceLink normalized values)
+  - `CallStatus`, `MessageStatus` enums (VoiceSeek normalized values)
 
 **Refs:** SDD §2.1 (lib/types.ts), API Reference (all response shapes)
 

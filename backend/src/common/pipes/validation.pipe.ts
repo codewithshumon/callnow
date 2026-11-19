@@ -20,7 +20,7 @@ export const validationPipeOptions: ValidationPipeOptions = {
   transformOptions: {
     enableImplicitConversion: true,
   },
-  // Map class-validator errors to VoiceLink error format
+  // Map class-validator errors to VoiceSeek error format
   exceptionFactory: (errors) => {
     const { BadRequestException } = require('@nestjs/common');
     const messages = errors.flatMap((err) => {

@@ -1,5 +1,5 @@
 # Technical Design Addendum
-## VoiceLink — Telephony Provider Abstraction Layer (PAL)
+## VoiceSeek — Telephony Provider Abstraction Layer (PAL)
 
 | Field | Detail |
 |---|---|
@@ -12,7 +12,7 @@
 
 ## 1. Purpose
 
-VoiceLink must not be hard-wired to Twilio. All voice, SMS/MMS, and number-provisioning operations shall go through a **Telephony Provider Abstraction Layer (PAL)** so the active provider can be changed via configuration, without code changes to controllers, services, the database schema, or the frontend.
+VoiceSeek must not be hard-wired to Twilio. All voice, SMS/MMS, and number-provisioning operations shall go through a **Telephony Provider Abstraction Layer (PAL)** so the active provider can be changed via configuration, without code changes to controllers, services, the database schema, or the frontend.
 
 This document defines the interface contract, configuration mechanism, data model changes, and webhook normalization required to support multiple providers. Twilio is the only **active** implementation at launch; other providers are defined as the same interface with stub/placeholder implementations to be completed later.
 
@@ -214,11 +214,11 @@ async handleInboundCall(
 
 ## 6. Status Code Normalization
 
-Providers use different strings for the same concepts. The PAL maps provider-native statuses to VoiceLink's internal enums.
+Providers use different strings for the same concepts. The PAL maps provider-native statuses to VoiceSeek's internal enums.
 
 ### 6.1 Message Status
 
-| VoiceLink Status | Twilio | Vonage | Bandwidth |
+| VoiceSeek Status | Twilio | Vonage | Bandwidth |
 |---|---|---|---|
 | `queued` | `queued` | `submitted` | `QUEUED` |
 | `sent` | `sent` | `sent` | `SENDING` |
@@ -227,7 +227,7 @@ Providers use different strings for the same concepts. The PAL maps provider-nat
 
 ### 6.2 Call Status
 
-| VoiceLink Status | Twilio | Vonage | Bandwidth |
+| VoiceSeek Status | Twilio | Vonage | Bandwidth |
 |---|---|---|---|
 | `initiated` | `queued`, `initiated` | `started` | `initiated` |
 | `ringing` | `ringing` | `ringing` | `alerting` |
@@ -324,7 +324,7 @@ export async function initializeCallClient(tokenResponse: { token: string; provi
 | Toll-free numbers | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Browser WebRTC SDK | ✅ (Voice SDK) | ✅ (Client SDK) | ✅ (WebRTC SDK) | ⚠️ (limited) | ⚠️ (limited) |
 
-**Implication for FR-CALL-08** (voicemail transcription): if the provider is switched away from Twilio, VoiceLink must fall back to an external speech-to-text service (e.g., Whisper API) invoked by the backend after recording retrieval. The PAL's optional `transcribeRecording?` method signals this — when absent, `CallingService` calls the fallback STT service instead.
+**Implication for FR-CALL-08** (voicemail transcription): if the provider is switched away from Twilio, VoiceSeek must fall back to an external speech-to-text service (e.g., Whisper API) invoked by the backend after recording retrieval. The PAL's optional `transcribeRecording?` method signals this — when absent, `CallingService` calls the fallback STT service instead.
 
 ---
 

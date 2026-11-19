@@ -1,5 +1,5 @@
 # System Design Document (SDD)
-## VoiceLink — Architecture & Technical Design
+## VoiceSeek — Architecture & Technical Design
 
 | Field | Detail |
 |---|---|
@@ -29,7 +29,7 @@
 
 ## 1. Architecture Overview
 
-VoiceLink uses a microservice-adjacent architecture with three main compute layers:
+VoiceSeek uses a microservice-adjacent architecture with three main compute layers:
 
 ```
                         ┌─────────────────────┐
@@ -705,7 +705,7 @@ Events emitted to clients:
 | `campaign:progress` | `{id, dialed, answered, failed, remaining}` | Every 5 dials |
 | `campaign:complete` | `{id, summary}` | Campaign finishes |
 
-All statuses in event payloads use VoiceLink's normalized internal status enums, not provider-native strings. See the PAL addendum §6 for the full mapping table.
+All statuses in event payloads use VoiceSeek's normalized internal status enums, not provider-native strings. See the PAL addendum §6 for the full mapping table.
 
 ### 6.2 WebRTC Call Flow
 
@@ -731,7 +731,7 @@ Browser                  NestJS                    Telephony Provider
 
 ## 7. Telephony Integration
 
-VoiceLink's telephony layer is abstracted behind the **Telephony Provider Abstraction Layer (PAL)**. See the PAL addendum document for the full interface contract, provider capability matrix, status normalization tables, and phasing plan. This section covers the runtime configuration and webhook routing.
+VoiceSeek's telephony layer is abstracted behind the **Telephony Provider Abstraction Layer (PAL)**. See the PAL addendum document for the full interface contract, provider capability matrix, status normalization tables, and phasing plan. This section covers the runtime configuration and webhook routing.
 
 ### 7.1 Provider Configuration
 
@@ -808,7 +808,7 @@ services:
     ports: ['4000:4000']
     depends_on: [postgres, redis]
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/voicelink
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/voiceseek
       - REDIS_URL=redis://redis:6379
       - DIALER_SERVICE_URL=http://dialer:8080
 
@@ -824,7 +824,7 @@ services:
     image: postgres:15-alpine
     volumes: ['pgdata:/var/lib/postgresql/data']
     environment:
-      - POSTGRES_DB=voicelink
+      - POSTGRES_DB=voiceseek
       - POSTGRES_PASSWORD=postgres
 
   redis:
@@ -841,8 +841,8 @@ volumes:
 ```
 Cloudflare (DNS + CDN + WAF)
         │
-        ├── voicelink.io          → Vercel (Next.js)
-        └── api.voicelink.io      → Kubernetes cluster
+        ├── voiceseek.io          → Vercel (Next.js)
+        └── api.voiceseek.io      → Kubernetes cluster
                                         │
                                         ├── NestJS pods (3 replicas min)
                                         ├── Go Dialer pods (auto-scaled)

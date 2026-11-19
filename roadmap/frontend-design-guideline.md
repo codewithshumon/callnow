@@ -1,4 +1,4 @@
-# VoiceLink Frontend — Design Guideline & Component Architecture
+# VoiceSeek Frontend — Design Guideline & Component Architecture
 
 > **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · shadcn/ui · Zustand · TanStack Query
 > **Derived from:** SDD §2, URD Personas & Use Cases & Journey Maps, API Reference, PAL §9
@@ -260,7 +260,7 @@ view/
 **Layout:**
 ```
 ┌──────────────────────────────────────────────┐
-│  [VoiceLink Logo]            [Login] [Start] │
+│  [VoiceSeek Logo]            [Login] [Start] │
 ├──────────────────────────────────────────────┤
 │                                              │
 │     International Calling & Messaging        │
@@ -273,7 +273,7 @@ view/
 │   │ Calls   │  │ Numbers │  │ Dialer  │     │
 │   └─────────┘  └─────────┘  └─────────┘     │
 │                                              │
-│   "Sarah uses VoiceLink to take client       │
+│   "Sarah uses VoiceSeek to take client       │
 │    calls on her US number from London"       │
 │                                              │
 └──────────────────────────────────────────────┘
@@ -298,7 +298,7 @@ view/
 ```
 ┌──────────────────────────────────────────────────┐
 │                                                  │
-│              [VoiceLink Logo]                    │
+│              [VoiceSeek Logo]                    │
 │                                                  │
 │   ┌──────────────────────────────────────┐       │
 │   │  Welcome back                        │       │
@@ -351,7 +351,7 @@ view/
 **Layout:**
 ```
 ┌──────────────────────────────────────────────────┐
-│              [VoiceLink Logo]                    │
+│              [VoiceSeek Logo]                    │
 │   ┌──────────────────────────────────────┐       │
 │   │  Create your account                 │       │
 │   │                                      │       │

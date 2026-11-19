@@ -10,7 +10,7 @@ export class PrismaService
   constructor() {
     const databaseUrl =
       process.env.DATABASE_URL ||
-      'postgresql://postgres:postgres@localhost:5434/voicelink';
+      'postgresql://postgres:postgres@localhost:5434/voiceseek';
 
     super({
       adapter: new PrismaPg({ connectionString: databaseUrl }),

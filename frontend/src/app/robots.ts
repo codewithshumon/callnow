@@ -3,6 +3,6 @@ import type { MetadataRoute } from "next";
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: { userAgent: "*", allow: "/", disallow: ["/api/", "/dashboard/"] },
-    sitemap: "https://voicelink.io/sitemap.xml",
+    sitemap: "https://voiceseek.io/sitemap.xml",
   };
 }

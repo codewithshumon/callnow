@@ -10,7 +10,7 @@ import { map } from 'rxjs/operators';
 /**
  * Global response transform interceptor.
  *
- * Wraps all 2xx responses in VoiceLink's standard success envelope:
+ * Wraps all 2xx responses in VoiceSeek's standard success envelope:
  *   { success: true, data }
  *
  * For paginated responses that include { data, meta }, unwraps to:
@@ -26,6 +26,18 @@ export class TransformInterceptor<T> implements NestInterceptor<T, unknown> {
         // Pass through undefined/void responses (e.g., 204 No Content)
         if (responseData === undefined || responseData === null) {
           return { success: true, data: null };
+        }
+
+        // Pass through raw XML responses (e.g. TwiML for Twilio webhooks)
+        if (
+          typeof responseData === 'string' &&
+          (responseData.trim().startsWith('<?xml') || responseData.trim().startsWith('<Response'))
+        ) {
+          const res = _context.switchToHttp().getResponse();
+          if (res && typeof res.header === 'function') {
+            res.header('Content-Type', 'text/xml');
+          }
+          return responseData;
         }
 
         // If response already has { success: ... }, pass through

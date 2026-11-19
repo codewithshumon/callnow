@@ -69,7 +69,7 @@ export class BillingService {
 
     this.logger.log(`Checkout session for ${user?.email} → ${plan.name}`);
 
-    return { checkoutUrl: `https://checkout.voicelink.io/${plan.name.toLowerCase()}` };
+    return { checkoutUrl: `https://checkout.voiceseek.io/${plan.name.toLowerCase()}` };
   }
 
   // 9.1.5 — Upgrade/downgrade plan

@@ -75,7 +75,7 @@ describe('TwilioProvider', () => {
 
   it('should provision a number', async () => {
     const result = await provider.provisionNumber('+14155551234', {
-      baseUrl: 'https://api.voicelink.io', provider: 'twilio',
+      baseUrl: 'https://api.voiceseek.io', provider: 'twilio',
     });
     expect(result.number).toBe('+14155551234');
   });

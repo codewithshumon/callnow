@@ -28,8 +28,8 @@ async function bootstrap() {
 
   // 14.1.4 — Swagger/OpenAPI docs at GET /api/v1/docs
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('VoiceLink API')
-    .setDescription('VoiceLink — International Calling & Messaging Platform')
+    .setTitle('VoiceSeek API')
+    .setDescription('VoiceSeek — International Calling & Messaging Platform')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
@@ -44,7 +44,7 @@ async function bootstrap() {
   // 14.1.6 — Listen on PORT
   const port = process.env.PORT ?? 4000;
   await app.listen(port);
-  console.log(`VoiceLink API listening on port ${port}`);
+  console.log(`VoiceSeek API listening on port ${port}`);
   console.log(`Swagger docs: http://localhost:${port}/api/v1/docs`);
 }
 

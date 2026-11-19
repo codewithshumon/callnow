@@ -2,7 +2,7 @@
 
 ## Architecture overview
 
-VoiceLink uses a **Next.js BFF (Backend For Frontend) cookie pattern** for secure token management. The NestJS backend stays stateless — tokens travel in response bodies and `Authorization` headers. Next.js API routes act as the cookie manager, converting between httpOnly cookies (browser ↔ Next.js) and Authorization headers (Next.js ↔ backend).
+VoiceSeek uses a **Next.js BFF (Backend For Frontend) cookie pattern** for secure token management. The NestJS backend stays stateless — tokens travel in response bodies and `Authorization` headers. Next.js API routes act as the cookie manager, converting between httpOnly cookies (browser ↔ Next.js) and Authorization headers (Next.js ↔ backend).
 
 ```
 ┌──────────┐     httpOnly cookies      ┌──────────┐    Authorization header    ┌──────────┐

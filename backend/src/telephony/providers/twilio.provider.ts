@@ -56,6 +56,7 @@ export class TwilioProvider implements TelephonyProvider {
     this.authToken = twilio.authToken;
     this.apiKey = twilio.apiKey;
     this.apiSecret = twilio.apiSecret;
+    this.twimlAppSid = twilio.twimlAppSid;
 
     if (!this.accountSid || !this.authToken) {
       this.logger.warn(
@@ -346,6 +347,7 @@ export class TwilioProvider implements TelephonyProvider {
           const dial = twiml.dial({
             timeout: action.timeout || 30,
             action: action.voicemailRedirect,
+            callerId: action.callerId,
           });
           dial.number(action.number);
         }
@@ -540,7 +542,7 @@ export class TwilioProvider implements TelephonyProvider {
   // ---------------------------------------------------------------------------
 
   /**
-   * Load the Twilio→VoiceLink status map JSON and cache it.
+   * Load the Twilio→VoiceSeek status map JSON and cache it.
    */
   private loadStatusMap(): Record<string, Record<string, string>> {
     try {
@@ -554,7 +556,7 @@ export class TwilioProvider implements TelephonyProvider {
   }
 
   /**
-   * Normalize a Twilio provider status string to VoiceLink internal enum.
+   * Normalize a Twilio provider status string to VoiceSeek internal enum.
    * Uses the status-maps/twilio.json mapping table. Falls back to raw status.
    */
   private normalizeStatus(

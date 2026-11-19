@@ -1,4 +1,4 @@
-// VoiceLink — Telephony Provider Abstraction Layer
+// VoiceSeek — Telephony Provider Abstraction Layer
 // Ref: PAL §3, PAL §3.1
 // =============================================================================
 
@@ -39,7 +39,7 @@ export interface NormalizedInboundCall {
 export interface NormalizedStatusEvent {
   providerSid: string; // message or call sid
   resourceType: 'message' | 'call';
-  status: string; // normalized VoiceLink status enum
+  status: string; // normalized VoiceSeek status enum
   errorCode?: string;
   timestamp: string; // ISO 8601
 }
@@ -55,7 +55,7 @@ export interface NumberSearchParams {
 }
 
 export interface WebhookConfig {
-  baseUrl: string; // VoiceLink API base URL
+  baseUrl: string; // VoiceSeek API base URL
   provider: string; // e.g. 'twilio' — used for :provider path segment
 }
 
@@ -88,6 +88,7 @@ export interface CallControlAction {
     | 'empty';
   clientId?: string;
   number?: string;
+  callerId?: string;
   timeout?: number; // seconds
   voicemailRedirect?: string; // URL for voicemail fallback
   redirectUrl?: string;

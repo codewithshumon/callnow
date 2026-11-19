@@ -173,7 +173,7 @@ export class AuthService {
       await this.telephonyProvider.sendMessage({
         from: '+18000000000', // placeholder — actual from-number config required
         to: phone,
-        body: `Your VoiceLink verification code: ${code}`,
+        body: `Your VoiceSeek verification code: ${code}`,
       });
     } catch (error) {
       this.logger.error(`Failed to send OTP SMS to ${phone}`, error);
@@ -227,7 +227,7 @@ export class AuthService {
     let user = await this.prisma.user.findUnique({ where: { phone } });
     if (!user) {
       user = await this.prisma.user.create({
-        data: { email: `${phone}@phone.voicelink.local`, phone },
+        data: { email: `${phone}@phone.voiceseek.local`, phone },
       });
     }
 
@@ -417,7 +417,7 @@ export class AuthService {
   // ---------------------------------------------------------------------------
   async enable2fa(userId: string) {
     const secret = speakeasy.generateSecret({
-      name: 'VoiceLink',
+      name: 'VoiceSeek',
       length: 20,
     });
 

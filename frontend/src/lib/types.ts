@@ -1,5 +1,5 @@
 // ============================================================
-// VoiceLink — Shared TypeScript Types
+// VoiceSeek — Shared TypeScript Types
 // Derived from: API Reference, SDD §5.2 Schema, PAL §6 Status Maps
 // ============================================================
 

@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2480" height="3508" viewBox="0 0 2480 3508">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Calibri:wght@400;700&amp;display=swap');
+      text { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; }
+      .name { font-size: 52px; font-weight: bold; fill: #000; }
+      .contact { font-size: 22px; fill: #444; }
+      .contact-link { font-size: 22px; fill: #1a0dab; text-decoration: underline; cursor: pointer; }
+      .title-line { font-size: 23px; fill: #333; font-style: italic; }
+      .section-header { font-size: 30px; font-weight: bold; fill: #000; letter-spacing: 3px; }
+      .section-line { stroke: #000; stroke-width: 3; }
+      .job-title { font-size: 26px; font-weight: bold; fill: #000; }
+      .company { font-size: 24px; font-weight: bold; fill: #1a3a5c; }
+      .date { font-size: 22px; fill: #555; }
+      .bullet { font-size: 22px; fill: #333; }
+      .project-name { font-size: 24px; font-weight: bold; fill: #000; }
+      .project-desc { font-size: 22px; fill: #333; }
+      .edu-degree { font-size: 24px; font-weight: bold; fill: #000; }
+      .edu-school { font-size: 23px; fill: #333; }
+      .edu-major { font-size: 22px; fill: #555; }
+      .award-text { font-size: 22px; fill: #333; }
+      .award-link { font-size: 22px; fill: #1a0dab; text-decoration: underline; cursor: pointer; }
+      .separator { font-size: 22px; fill: #888; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="2480" height="3508" fill="#ffffff"/>
+
+  <!-- ===== HEADER ===== -->
+  <!-- Name -->
+  <text x="1240" y="160" text-anchor="middle" class="name">MD. RAQIBUR RAHMAN</text>
+
+  <!-- Contact Line -->
+  <!-- email | phone | LinkedIn | Portfolio -->
+  <text x="1240" y="210" text-anchor="middle">
+    <tspan class="contact-link">raqibur91@gmail.com</tspan>
+    <tspan class="separator"> | </tspan>
+    <tspan class="contact">+8801798012767</tspan>
+    <tspan class="separator"> | </tspan>
+    <tspan class="contact-link">LinkedIn</tspan>
+    <tspan class="separator"> | </tspan>
+    <tspan class="contact-link">Portfolio</tspan>
+  </text>
+
+  <!-- Title / Summary -->
+  <text x="140" y="300" class="title-line">
+    <tspan x="140" dy="0">Software Engineer and Team Lead with 5 years of experience in backend development, system design and</tspan>
+    <tspan x="140" dy="30">low-latency architecture. Proficient in Java, Spring Boot and AWS, with a strong track record of delivering scalable</tspan>
+    <tspan x="140" dy="30">solutions and leading high-performing teams.</tspan>
+  </text>
+
+  <!-- ===== SKILLS ===== -->
+  <!-- Section Header with background bar effect -->
+  <rect x="140" y="400" width="2200" height="3" fill="#000"/>
+  <text x="140" y="388" class="section-header">SKILLS</text>
+  <rect x="140" y="403" width="2200" height="1" fill="#000"/>
+
+  <text x="140" y="460" class="bullet">
+    <tspan x="140" dy="0">Java | Spring Boot | JPA | Hibernate | REST | Microservices | Kafka | Maven | Gradle | PostgreSQL | MySQL | Oracle DB</tspan>
+    <tspan x="140" dy="30">| MongoDB | Redis | EhCache | HTML | CSS | JavaScript | JQuery | Bootstrap | Thymeleaf | TypeScript | Angular | OOP</tspan>
+    <tspan x="140" dy="30">| Data Structure | Algorithm | Design Pattern | Postman | Git | Docker | Linux | AWS | Jira</tspan>
+  </text>
+
+  <!-- ===== WORK EXPERIENCE ===== -->
+  <rect x="140" y="568" width="2200" height="3" fill="#000"/>
+  <text x="140" y="556" class="section-header">WORK EXPERIENCE</text>
+  <rect x="140" y="571" width="2200" height="1" fill="#000"/>
+
+  <!-- Job 1 -->
+  <text x="140" y="630" class="job-title">Team Lead (Streaming Solution)</text>
+  <text x="1240" y="630" text-anchor="middle" class="company">TiCON System Ltd. (South Korea Based)</text>
+  <text x="2280" y="630" text-anchor="end" class="date">08/2024 - Present</text>
+
+  <circle cx="160" cy="662" r="5" fill="#333"/>
+  <text x="180" y="669" class="bullet">Directed a team of 6+ engineers in delivering high-performance OTT solutions for international markets.</text>
+
+  <circle cx="160" cy="698" r="5" fill="#333"/>
+  <text x="180" y="705" class="bullet">Architected scalable services for video streaming, reducing system latency by over 40%.</text>
+
+  <circle cx="160" cy="734" r="5" fill="#333"/>
+  <text x="180" y="741" class="bullet">Oversaw code reviews, sprint planning and architecture design, ensuring 95% on-time delivery.</text>
+
+  <circle cx="160" cy="770" r="5" fill="#333"/>
+  <text x="180" y="777" class="bullet">Conducted R&amp;D initiatives, introducing 3+ key streaming features that improved QoS and user retention.</text>
+
+  <circle cx="160" cy="806" r="5" fill="#333"/>
+  <text x="180" y="813" class="bullet">Oversaw full project lifecycles, maintaining strong stakeholder engagement throughout.</text>
+
+  <circle cx="160" cy="842" r="5" fill="#333"/>
+  <text x="180" y="849" class="bullet">Optimized resource allocation and risk management strategies, minimizing development delays by 30%.</text>
+
+  <!-- Job 2 -->
+  <text x="140" y="930" class="job-title">Software Engineer (Java)</text>
+  <text x="1240" y="930" text-anchor="middle" class="company">TiCON System Ltd. (South Korea Based)</text>
+  <text x="2280" y="930" text-anchor="end" class="date">02/2022 - 07/2024</text>
+
+  <circle cx="160" cy="962" r="5" fill="#333"/>
+  <text x="180" y="969" class="bullet">Built and deployed 10+ backend services powering OTT platforms with 1M+ active users.</text>
+
+  <circle cx="160" cy="998" r="5" fill="#333"/>
+  <text x="180" y="1005" class="bullet">Implemented WebSocket-based real-time communication reducing streaming latency by 60%.</text>
+
+  <circle cx="160" cy="1034" r="5" fill="#333"/>
+  <text x="180" y="1041" class="bullet">Optimized caching and API performance, boosting responsiveness by up to 45%.</text>
+
+  <circle cx="160" cy="1070" r="5" fill="#333"/>
+  <text x="180" y="1077" class="bullet">Developed monitoring tools, improving stability and accelerating issue resolution by 30%.</text>
+
+  <circle cx="160" cy="1106" r="5" fill="#333"/>
+  <text x="180" y="1113" class="bullet">Collaborated across departments to consistently hit 95% delivery targets.</text>
+
+  <circle cx="160" cy="1142" r="5" fill="#333"/>
+  <text x="180" y="1149" class="bullet">Stack: Java, Spring Boot, AWS.</text>
+
+  <!-- Job 3 -->
+  <text x="140" y="1230" class="job-title">Junior Software Developer</text>
+  <text x="1240" y="1230" text-anchor="middle" class="company">Radiant Data Systems Ltd. (U.S. Based)</text>
+  <text x="2280" y="1230" text-anchor="end" class="date">04/2021 - 01/2022</text>
+
+  <circle cx="160" cy="1262" r="5" fill="#333"/>
+  <text x="180" y="1269" class="bullet">Contributed to multiple in-house systems using Java, Spring and Oracle DB.</text>
+
+  <circle cx="160" cy="1298" r="5" fill="#333"/>
+  <text x="180" y="1305" class="bullet">Developed automated features that streamlined daily operations.</text>
+
+  <circle cx="160" cy="1334" r="5" fill="#333"/>
+  <text x="180" y="1341" class="bullet">Worked with Mirth, Talend, and HL7 for secure healthcare data integration.</text>
+
+  <circle cx="160" cy="1370" r="5" fill="#333"/>
+  <text x="180" y="1377" class="bullet">Addressed critical bugs affecting sensitive patient data while ensuring HIPAA compliance.</text>
+
+  <circle cx="160" cy="1406" r="5" fill="#333"/>
+  <text x="180" y="1413" class="bullet">Stack: Java, Spring MVC, Oracle DB.</text>
+
+  <!-- ===== PROJECTS ===== -->
+  <rect x="140" y="1510" width="2200" height="3" fill="#000"/>
+  <text x="140" y="1498" class="section-header">PROJECTS</text>
+  <rect x="140" y="1513" width="2200" height="1" fill="#000"/>
+
+  <!-- Project 1 -->
+  <circle cx="160" cy="1570" r="5" fill="#333"/>
+  <text x="180" y="1577">
+    <tspan class="project-name">TVSTORM:</tspan>
+    <tspan class="project-desc"> Designed and deployed a complete OTT platform with transcoder engine, CDN hierarchy, and</tspan>
+    <tspan x="180" dy="30" class="project-desc">static content servers. Ensured seamless component integration and system optimization. The transcoder is</tspan>
+    <tspan x="180" dy="30" class="project-desc">now reused in 5+ platforms across South Korea and Indonesia.</tspan>
+  </text>
+
+  <!-- Project 2 -->
+  <circle cx="160" cy="1685" r="5" fill="#333"/>
+  <text x="180" y="1692">
+    <tspan class="project-name">BTV:</tspan>
+    <tspan class="project-desc"> Led backend development for the national TV streaming platform, delivering high availability and</tspan>
+    <tspan x="180" dy="30" class="project-desc">scalability for millions of users. </tspan>
+    <tspan class="project-desc" fill="#1a0dab" text-decoration="underline">(Link)</tspan>
+  </text>
+
+  <!-- Project 3 -->
+  <circle cx="160" cy="1772" r="5" fill="#333"/>
+  <text x="180" y="1779">
+    <tspan class="project-name">RABBITHOLE BD:</tspan>
+    <tspan class="project-desc"> Oversaw architecture and implementation of both live and VOD transcoding systems for</tspan>
+    <tspan x="180" dy="30" class="project-desc">one of Bangladesh's leading OTT platforms. </tspan>
+    <tspan class="project-desc" fill="#1a0dab" text-decoration="underline">(Link)</tspan>
+  </text>
+
+  <!-- Project 4 -->
+  <circle cx="160" cy="1865" r="5" fill="#333"/>
+  <text x="180" y="1872">
+    <tspan class="project-name">HD-MSB-TX-RX:</tspan>
+    <tspan class="project-desc"> Built a stream capture and transcoding system using Raspberry Pi and STB, with efficient</tspan>
+    <tspan x="180" dy="30" class="project-desc">caching and relay for faster content delivery.</tspan>
+  </text>
+
+  <!-- Project 5 -->
+  <circle cx="160" cy="1952" r="5" fill="#333"/>
+  <text x="180" y="1959">
+    <tspan class="project-name">Other Noteworthy Projects:</tspan>
+    <tspan class="project-desc"> CHVOD, 18 MALL, CiNET, MAISAFE </tspan>
+    <tspan class="project-desc" fill="#1a0dab" text-decoration="underline">(Link)</tspan>
+    <tspan class="project-desc"> etc.</tspan>
+  </text>
+
+  <!-- ===== AWARDS AND CERTIFICATIONS ===== -->
+  <rect x="140" y="2070" width="2200" height="3" fill="#000"/>
+  <text x="140" y="2058" class="section-header">AWARDS AND CERTIFICATIONS</text>
+  <rect x="140" y="2073" width="2200" height="1" fill="#000"/>
+
+  <circle cx="160" cy="2130" r="5" fill="#333"/>
+  <text x="180" y="2137">
+    <tspan class="award-text">AWS Certified Solution Architect - Associate </tspan>
+    <tspan class="award-link">(Link)</tspan>
+  </text>
+
+  <circle cx="160" cy="2170" r="5" fill="#333"/>
+  <text x="180" y="2177" class="award-text">Best Performer Award - TiCON (2023)</text>
+
+  <!-- ===== EDUCATION ===== -->
+  <rect x="140" y="2290" width="2200" height="3" fill="#000"/>
+  <text x="140" y="2278" class="section-header">EDUCATION</text>
+  <rect x="140" y="2293" width="2200" height="1" fill="#000"/>
+
+  <!-- Education 1 -->
+  <circle cx="160" cy="2355" r="5" fill="#333"/>
+  <text x="180" y="2362">
+    <tspan class="edu-degree">M.Sc (Engg.),</tspan>
+    <tspan class="edu-school"> United International University, Dhaka, Bangladesh</tspan>
+    <tspan class="date" fill="#aaa">    01/2023 - 05/2025</tspan>
+  </text>
+  <text x="202" y="2395" class="edu-major">○ Major in Computer Science and Engineering</text>
+
+  <!-- Education 2 -->
+  <circle cx="160" cy="2460" r="5" fill="#333"/>
+  <text x="180" y="2467">
+    <tspan class="edu-degree">B.Sc (Engg.),</tspan>
+    <tspan class="edu-school"> Military Institute of Science and Technology, Dhaka, Bangladesh</tspan>
+  </text>
+  <text x="202" y="2500" class="edu-major">○ Major in Computer Science and Engineering</text>
+
+</svg>

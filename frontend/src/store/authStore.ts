@@ -129,7 +129,7 @@ export const useAuthStore = create<AuthState>()(
       hasVerifiedEmail: () => get().user?.emailVerified ?? false,
     }),
     {
-      name: "voicelink-auth",
+      name: "voiceseek-auth",
       partialize: (state) => ({
         user: state.user, // only persist user for UI; tokens live in cookies
       }),

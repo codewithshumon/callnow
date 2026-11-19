@@ -33,7 +33,7 @@ export default function InboundCallOverlay() {
     if (isOpen) {
       document.title = "📞 Incoming call...";
       return () => {
-        document.title = "VoiceLink";
+        document.title = "VoiceSeek";
       };
     }
   }, [isOpen]);

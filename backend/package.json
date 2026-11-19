@@ -1,7 +1,7 @@
 {
-  "name": "api",
+  "name": "voiceseek-api",
   "version": "0.0.1",
-  "description": "",
+  "description": "VoiceSeek Backend API",
   "author": "",
   "private": true,
   "license": "UNLICENSED",

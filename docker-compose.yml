@@ -1,10 +1,10 @@
 services:
   # PostgreSQL 15 — Primary data store
   postgres:
-    container_name: callnow-postgres
+    container_name: voiceseek-postgres
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: voicelink
+      POSTGRES_DB: voiceseek
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -19,7 +19,7 @@ services:
 
   # Redis 7 — Cache, queues, WebSocket state, rate limiting
   redis:
-    container_name: callnow-redis
+    container_name: voiceseek-redis
     image: redis:7-alpine
     ports:
       - '6383:6379'
@@ -33,13 +33,13 @@ services:
 
   # pgAdmin 4 — PostgreSQL web admin interface
   pgadmin:
-    container_name: callnow-pgadmin
+    container_name: voiceseek-pgadmin
     image: dpage/pgadmin4:latest
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@callnow.com
+      PGADMIN_DEFAULT_EMAIL: admin@voiceseek.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
-      - '5050:80'
+      - '5051:80'
     volumes:
       - pgadmindata:/var/lib/pgadmin
     depends_on:

@@ -11,7 +11,7 @@ export default function RegisterPage() {
     <Card>
       <CardHeader className="text-center">
         <CardTitle>Create your account</CardTitle>
-        <CardDescription>Get started with VoiceLink for free</CardDescription>
+        <CardDescription>Get started with VoiceSeek for free</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <GoogleLoginButton />

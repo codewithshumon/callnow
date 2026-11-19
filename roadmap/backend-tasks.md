@@ -1,4 +1,4 @@
-# VoiceLink NestJS Backend — Complete Task List
+# VoiceSeek NestJS Backend — Complete Task List
 
 > **Derived from:** SDD §3, SRS §3–8, PAL §1–12, URD Use Cases, API Reference
 > **Stack:** NestJS 10 · Prisma ORM · PostgreSQL 15 · Redis 7 · Twilio SDK (v1)
@@ -322,7 +322,7 @@
 - [ ] **2.2.10** Implement `validateWebhookSignature` — verify Twilio X-Twilio-Signature header using auth token
 - [ ] **2.2.11** Implement `parseInboundMessageWebhook` — extract `From`, `To`, `Body`, `MessageSid`, `NumMedia`, `MediaUrlN` → `NormalizedInboundMessage`
 - [ ] **2.2.12** Implement `parseInboundCallWebhook` — extract `CallSid`, `From`, `To`, `Direction` → `NormalizedInboundCall`
-- [ ] **2.2.13** Implement `parseStatusCallback` — map Twilio status strings to VoiceLink enums using `status-maps/twilio.json`
+- [ ] **2.2.13** Implement `parseStatusCallback` — map Twilio status strings to VoiceSeek enums using `status-maps/twilio.json`
 - [ ] **2.2.14** Implement `getRecording` — fetch recording media URL
 - [ ] **2.2.15** Implement `transcribeRecording` — use Twilio's built-in transcription API
 - [ ] **2.2.16** Set `capabilities` field per PAL §10 capability matrix

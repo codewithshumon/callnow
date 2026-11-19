@@ -1,4 +1,4 @@
-# VoiceLink Go Echo Dialer — Complete Task List
+# VoiceSeek Go Echo Dialer — Complete Task List
 
 > **Derived from:** SDD §4, SRS §3.5, PAL §1–12, URD Use Cases, API Reference
 > **Stack:** Go 1.22 · Echo v4 · pgx v5 · Redis 7 · Twilio SDK (v1 active)
@@ -102,7 +102,7 @@
 
 ### 0.1 — Go Module Initialization
 
-- [ ] **0.1.1** Initialize Go module: `go mod init github.com/voicelink/dialer-service` (Go 1.22)
+- [ ] **0.1.1** Initialize Go module: `go mod init github.com/voiceseek/dialer-service` (Go 1.22)
 - [ ] **0.1.2** Install Echo v4: `go get github.com/labstack/echo/v4`
 - [ ] **0.1.3** Install pgx v5 + pgxpool: `go get github.com/jackc/pgx/v5`
 - [ ] **0.1.4** Install Redis client: `go get github.com/redis/go-redis/v9`
@@ -273,7 +273,7 @@
 
 ### 4.4 — Call Outcome Classification
 
-- [ ] **4.4.1** Create `internal/dialer/call_outcome.go` — map Twilio call status strings to VoiceLink `ContactStatus` enums:
+- [ ] **4.4.1** Create `internal/dialer/call_outcome.go` — map Twilio call status strings to VoiceSeek `ContactStatus` enums:
   - `completed` → `answered`
   - `no-answer` → `no-answer`
   - `busy` → `busy`
@@ -561,7 +561,7 @@
   - `test` — `go test ./... -race -cover`
   - `lint` — `golangci-lint run`
   - `fmt` — `go fmt ./...`
-  - `docker-build` — `docker build -t voicelink-dialer .`
+  - `docker-build` — `docker build -t voiceseek-dialer .`
   - `migrate-up` — run DB migrations
   - `generate` — `go generate ./...`
 
@@ -635,7 +635,7 @@
         condition: service_healthy
     environment:
       - PORT=8080
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/voicelink
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/voiceseek
       - REDIS_URL=redis://redis:6379
       - TELEPHONY_PROVIDER=twilio
       - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}

@@ -1,4 +1,4 @@
-# VoiceLink — Complete Database Schema
+# VoiceSeek — Complete Database Schema
 
 > **Derived from:** SDD §5, SRS §6, PAL §7, API Reference
 > **Database:** PostgreSQL 15+

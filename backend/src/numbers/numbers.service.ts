@@ -84,7 +84,7 @@ export class NumbersService {
         : '';
 
     const provisioned = await this.telephonyProvider.provisionNumber(number, {
-      baseUrl: baseUrl || 'https://api.voicelink.io',
+      baseUrl: baseUrl || 'https://api.voiceseek.io',
       provider: this.telephonyProvider.name,
     });
 

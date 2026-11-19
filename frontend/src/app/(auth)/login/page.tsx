@@ -16,7 +16,7 @@ export default function LoginPage() {
     <Card>
       <CardHeader className="text-center">
         <CardTitle>Welcome back</CardTitle>
-        <CardDescription>Log in to your VoiceLink account</CardDescription>
+        <CardDescription>Log in to your VoiceSeek account</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <GoogleLoginButton />

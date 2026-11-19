@@ -16,7 +16,7 @@ interface ErrorBody {
 
 /**
  * Global exception filter — catches all exceptions and returns them
- * in the VoiceLink standard error envelope { success: false, error: {...} }.
+ * in the VoiceSeek standard error envelope { success: false, error: {...} }.
  *
  * Ref: API §10.1 (response envelope), API §Error Codes
  */

@@ -1,8 +1,8 @@
 # API Reference
-## VoiceLink REST API v1
+## VoiceSeek REST API v1
 
-**Base URL:** `https://api.voicelink.io/api/v1`
-**WebSocket:** `wss://api.voicelink.io/ws`
+**Base URL:** `https://api.voiceseek.io/api/v1`
+**WebSocket:** `wss://api.voiceseek.io/ws`
 **Auth:** Bearer JWT in `Authorization` header
 
 All requests and responses use `Content-Type: application/json` unless noted.
@@ -283,7 +283,7 @@ List all conversations, sorted by last message.
       "provider": "twilio",
       "providerSid": "SM...",
       "direction": "outbound",
-      "body": "Hello from VoiceLink!",
+      "body": "Hello from VoiceSeek!",
       "mediaUrls": [],
       "status": "delivered",
       "createdAt": "2024-01-15T10:05:00Z"
@@ -302,7 +302,7 @@ Send an SMS or MMS.
 {
   "fromNumber": "+14155551234",
   "toNumber": "+447911123456",
-  "body": "Hello from VoiceLink!",
+  "body": "Hello from VoiceSeek!",
   "mediaUrls": [],
   "scheduledAt": null
 }
@@ -515,7 +515,7 @@ List past invoices. Returns array with `id`, `amount`, `period`, `status`, `pdfU
 
 ## WebSocket Events
 
-Connect: `wss://api.voicelink.io/ws` with `Authorization: Bearer {token}` header.
+Connect: `wss://api.voiceseek.io/ws` with `Authorization: Bearer {token}` header.
 
 ### Inbound Events (server → client)
 

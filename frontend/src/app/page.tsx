@@ -33,7 +33,7 @@ export default function LandingPage() {
         <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <div className="flex items-center gap-2 font-semibold text-lg">
             <Phone className="h-5 w-5 text-primary" />
-            VoiceLink
+            VoiceSeek
           </div>
           <nav className="flex items-center gap-3">
             <Link href="/login" className={ghostLinkClasses}>
@@ -75,7 +75,7 @@ export default function LandingPage() {
             Everything you need to communicate globally
           </h2>
           <p className="mx-auto mt-3 max-w-lg text-center text-muted-foreground">
-            VoiceLink replaces expensive carrier plans and bulky dialing
+            VoiceSeek replaces expensive carrier plans and bulky dialing
             hardware with a single browser-based platform.
           </p>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -139,7 +139,7 @@ export default function LandingPage() {
       <section className="border-t py-20">
         <div className="container mx-auto max-w-3xl px-4 text-center">
           <blockquote className="text-xl font-medium italic text-muted-foreground">
-            &ldquo;VoiceLink lets me take client calls on my US number from
+            &ldquo;VoiceSeek lets me take client calls on my US number from
             London. My clients don&apos;t even know I&apos;m overseas. It just
             works.&rdquo;
           </blockquote>
@@ -166,7 +166,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t py-8">
         <div className="container mx-auto max-w-6xl px-4 text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} VoiceLink. All rights reserved.
+          &copy; {new Date().getFullYear()} VoiceSeek. All rights reserved.
         </div>
       </footer>
     </div>
