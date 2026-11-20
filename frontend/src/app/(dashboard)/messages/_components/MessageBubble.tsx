@@ -26,9 +26,10 @@ export default function MessageBubble({ message }: Props) {
             ))}
           </div>
         )}
-        <div className="mt-1 flex items-center justify-end gap-1">
-          <span className="text-[10px] opacity-70">
-            {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        <div className="mt-1 flex items-center justify-end gap-1.5">
+          <span className="text-[10px] opacity-75 font-mono">
+            {new Date(message.createdAt).toLocaleDateString([], { month: "short", day: "numeric" })} •{" "}
+            {new Date(message.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
           </span>
           {isOutbound && statusIcon(message.status)}
         </div>

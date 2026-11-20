@@ -1,4 +1,6 @@
 import { Injectable, Inject, Logger, NotFoundException } from '@nestjs/common';
+import * as path from 'path';
+import * as fs from 'fs';
 import { PrismaService } from '../prisma/prisma.service';
 import type { TelephonyProvider } from '../telephony/interfaces/telephony-provider.interface';
 import { TELEPHONY_PROVIDER } from '../telephony/telephony.module';
@@ -44,12 +46,18 @@ export class CallingService {
     page = 1,
     limit = 20,
     direction?: 'inbound' | 'outbound',
+    hasRecording?: boolean,
   ) {
     // Auto-sync latest calls from provider so outgoing/incoming/missed calls appear immediately
     await this.syncTwilioCalls(userId);
 
-    const where: Record<string, unknown> = { userId };
+    const where: Record<string, unknown> = {
+      userId,
+      fromNumber: { not: 'Browser' },
+      toNumber: { not: 'Outbound' },
+    };
     if (direction) where.direction = direction;
+    if (hasRecording) where.recordingUrl = { not: null };
 
     const [data, total] = await Promise.all([
       this.prisma.call.findMany({
@@ -131,11 +139,18 @@ export class CallingService {
   }
 
   // Save local zero-cost audio recording
-  async saveCallRecording(userId: string, callSid: string, filename: string) {
+  async saveCallRecording(
+    userId: string,
+    callSid: string,
+    filename: string,
+    meta?: { toNumber?: string; fromNumber?: string; direction?: string },
+  ) {
     const recordingUrl = `/api/v1/calls/recordings/${filename}`;
 
-    const existing = await this.prisma.call.findFirst({
+    // 1. First check if call exists by providerCallSid or id
+    let existing = await this.prisma.call.findFirst({
       where: {
+        userId,
         OR: [
           { providerCallSid: callSid },
           ...(callSid.length === 36 ? [{ id: callSid }] : []),
@@ -143,20 +158,69 @@ export class CallingService {
       },
     });
 
+    // 2. If not found by SID and we have toNumber, match the most recent call
+    if (!existing && meta?.toNumber) {
+      existing = await this.prisma.call.findFirst({
+        where: {
+          userId,
+          toNumber: meta.toNumber,
+          createdAt: { gte: new Date(Date.now() - 5 * 60 * 1000) },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    }
+
+    // 3. If still not found, try syncTwilioCalls to pull latest CDR from Twilio
+    if (!existing) {
+      await this.syncTwilioCalls(userId);
+      if (meta?.toNumber) {
+        existing = await this.prisma.call.findFirst({
+          where: {
+            userId,
+            toNumber: meta.toNumber,
+            createdAt: { gte: new Date(Date.now() - 5 * 60 * 1000) },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+      }
+    }
+
     if (existing) {
       return this.prisma.call.update({
         where: { id: existing.id },
         data: { recordingUrl },
       });
     } else {
+      // Find the single most recent call for this user within the last 5 minutes as fallback
+      const recentCall = await this.prisma.call.findFirst({
+        where: {
+          userId,
+          fromNumber: { not: 'Browser' },
+          toNumber: { not: 'Outbound' },
+          createdAt: { gte: new Date(Date.now() - 5 * 60 * 1000) },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (recentCall) {
+        return this.prisma.call.update({
+          where: { id: recentCall.id },
+          data: { recordingUrl },
+        });
+      }
+
+      // If absolutely no call exists, only create if we have actual valid numbers (never dummy 'Browser'/'Outbound')
+      const validTo = meta?.toNumber && meta.toNumber !== 'Outbound' ? meta.toNumber : 'Unknown';
+      const validFrom = meta?.fromNumber && meta.fromNumber !== 'Browser' ? meta.fromNumber : 'Unknown';
+
       return this.prisma.call.create({
         data: {
           userId,
           providerCallSid: callSid,
           provider: 'twilio',
-          fromNumber: 'Browser',
-          toNumber: 'Outbound',
-          direction: 'outbound',
+          fromNumber: validFrom,
+          toNumber: validTo,
+          direction: (meta?.direction as any) || 'outbound',
           status: 'completed',
           recordingUrl,
           startedAt: new Date(),
@@ -164,6 +228,52 @@ export class CallingService {
         },
       });
     }
+  }
+
+  // Delete call recording and clear recording_url from database
+  async deleteCallRecording(userId: string, callId: string) {
+    const call = await this.prisma.call.findFirst({
+      where: {
+        userId,
+        OR: [
+          { id: callId },
+          { providerCallSid: callId },
+        ],
+      },
+    });
+
+    if (!call) {
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Call record not found',
+      });
+    }
+
+    if (call.recordingUrl) {
+      const filename = path.basename(call.recordingUrl);
+      const filePath = path.join(process.cwd(), 'uploads', 'recordings', filename);
+      if (fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath);
+        } catch (e) {
+          this.logger.warn(`Failed to unlink recording file ${filePath}: ${e}`);
+        }
+      }
+    }
+
+    await this.prisma.call.update({
+      where: { id: call.id },
+      data: {
+        recordingUrl: null,
+        recordingDuration: null,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Call recording deleted successfully',
+      callId: call.id,
+    };
   }
 
   // --- Voicemail helpers (used by webhook + controller) ---

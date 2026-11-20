@@ -23,7 +23,7 @@ export default function ConversationItem({ conversation, isActive, unreadCount }
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">
           <p className="truncate text-sm font-medium">{conversation.contactName || conversation.toNumber || conversation.fromNumber}</p>
-          <TimestampDisplay iso={conversation.lastMessage?.createdAt} className="shrink-0" />
+          <TimestampDisplay iso={conversation.lastMessage?.createdAt} className="shrink-0 text-[11px]" mode="both" />
         </div>
         <p className="truncate text-xs text-muted-foreground">{conversation.lastMessage?.body || ""}</p>
       </div>

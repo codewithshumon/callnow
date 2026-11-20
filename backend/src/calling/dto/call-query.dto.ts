@@ -18,4 +18,7 @@ export class CallQueryDto {
   @IsOptional()
   @IsIn(['inbound', 'outbound'])
   direction?: 'inbound' | 'outbound';
+
+  @IsOptional()
+  hasRecording?: string;
 }

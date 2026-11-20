@@ -15,6 +15,7 @@ import {
   LayoutTemplate,
   Radio,
   Zap,
+  Disc,
 } from "lucide-react";
 
 const navSections = [
@@ -24,6 +25,7 @@ const navSections = [
       { href: "/messages", label: "Messages & SMS", icon: MessageSquare },
       { href: "/calls", label: "Calls & Logs", icon: Phone },
       { href: "/calls/dialpad", label: "Web Dialpad", icon: PhoneCall },
+      { href: "/calls/recordings", label: "Call Recordings", icon: Disc },
       { href: "/dialer", label: "Power Dialer", icon: Zap },
       { href: "/voicemails", label: "Voicemails", icon: Voicemail },
     ],

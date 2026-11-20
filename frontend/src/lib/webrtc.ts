@@ -248,7 +248,10 @@ class BrowserAudioRecorder {
     }
   }
 
-  async stopRecordingAndUpload(callSid: string): Promise<void> {
+  async stopRecordingAndUpload(
+    callSid: string,
+    meta?: { to?: string; from?: string; direction?: string }
+  ): Promise<void> {
     if (!this.mediaRecorder || this.mediaRecorder.state === "inactive") return;
 
     return new Promise((resolve) => {
@@ -258,6 +261,9 @@ class BrowserAudioRecorder {
           if (audioBlob.size > 500) {
             const formData = new FormData();
             formData.append("audio", audioBlob, `${callSid}.webm`);
+            if (meta?.to) formData.append("toNumber", meta.to);
+            if (meta?.from) formData.append("fromNumber", meta.from);
+            if (meta?.direction) formData.append("direction", meta.direction);
 
             await fetch(`/api/calls/${encodeURIComponent(callSid)}/recording`, {
               method: "POST",
@@ -288,16 +294,12 @@ class BrowserAudioRecorder {
 }
 
 const callRecorder = new BrowserAudioRecorder();
+let activeCallMetadata: { to: string; from: string } | null = null;
 
 // ── Twilio call event handlers ──────────────────────────────
 
 function setupTwilioCallHandlers(twilioCall: TwilioCall): void {
   if (!twilioCall || typeof twilioCall.on !== "function") return;
-
-  const sid =
-    (twilioCall as any).parameters?.CallSid ||
-    (twilioCall as any).customParameters?.get?.("CallSid") ||
-    `call-${Date.now()}`;
 
   twilioCall.on("accept", () => {
     currentCall = twilioCall;
@@ -309,8 +311,24 @@ function setupTwilioCallHandlers(twilioCall: TwilioCall): void {
   });
 
   const handleEnd = () => {
+    const sid =
+      (twilioCall as any).parameters?.CallSid ||
+      (twilioCall as any).customParameters?.get?.("CallSid") ||
+      (twilioCall as any).sid ||
+      (twilioCall as any).outboundConnectionId ||
+      `call-${Date.now()}`;
+
+    const meta = activeCallMetadata
+      ? {
+          to: activeCallMetadata.to,
+          from: activeCallMetadata.from,
+          direction: "outbound",
+        }
+      : undefined;
+
     currentCall = null;
-    callRecorder.stopRecordingAndUpload(sid);
+    activeCallMetadata = null;
+    callRecorder.stopRecordingAndUpload(sid, meta);
     useCallStore.getState().endCall();
   };
 
@@ -348,6 +366,7 @@ export async function makeCall(params: {
   });
   const call = (callResult instanceof Promise ? await callResult : callResult) as TwilioCall;
   currentCall = call;
+  activeCallMetadata = { to: cleanTo, from: cleanFrom };
 
   setupTwilioCallHandlers(call);
 

@@ -26,6 +26,7 @@ import {
   ExternalLink,
   ChevronRight,
   ClipboardPaste,
+  FileAudio,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -241,9 +242,15 @@ export default function DialPad() {
 
   // Filtered contacts & recents for quick dial
   const filteredRecents = useMemo(() => {
-    if (!searchFilter.trim()) return recentCalls;
+    const valid = recentCalls.filter(
+      (c) =>
+        c.toNumber !== "Outbound" &&
+        c.fromNumber !== "Browser" &&
+        (c.toNumber || c.fromNumber)
+    );
+    if (!searchFilter.trim()) return valid;
     const q = searchFilter.toLowerCase();
-    return recentCalls.filter(
+    return valid.filter(
       (c) =>
         c.toNumber?.toLowerCase().includes(q) ||
         c.fromNumber?.toLowerCase().includes(q)
@@ -625,19 +632,38 @@ export default function DialPad() {
                               )}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-semibold truncate font-mono">
-                                {dialNumber}
-                              </p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold truncate font-mono">
+                                  {dialNumber}
+                                </p>
+                                {c.recordingUrl && (
+                                  <span
+                                    className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.2 rounded"
+                                    title="Call recorded"
+                                  >
+                                    <FileAudio className="h-2.5 w-2.5" /> Rec
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
                                 <span className="capitalize">{c.direction}</span>
                                 <span>•</span>
-                                <span>{new Date(c.startedAt || c.createdAt || Date.now()).toLocaleDateString()}</span>
-                                {c.durationSeconds > 0 && (
-                                  <>
-                                    <span>•</span>
-                                    <span>{formatDuration(c.durationSeconds)}</span>
-                                  </>
-                                )}
+                                <span className="font-mono text-[11px]">
+                                  {new Date(c.startedAt || c.createdAt || Date.now()).toLocaleDateString([], {
+                                    month: "short",
+                                    day: "numeric",
+                                  })}{" "}
+                                  {new Date(c.startedAt || c.createdAt || Date.now()).toLocaleTimeString([], {
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                  })}
+                                </span>
+                                <span>•</span>
+                                <span className="font-mono text-[11px] flex items-center gap-0.5 text-foreground">
+                                  <Clock className="h-3 w-3 text-muted-foreground" />
+                                  {formatDuration(c.durationSeconds || 0)}
+                                </span>
                               </div>
                             </div>
                           </div>

@@ -34,3 +34,32 @@ export async function POST(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get("access_token")?.value;
+    const authHeader =
+      request.headers.get("authorization") ||
+      (accessToken ? `Bearer ${accessToken}` : "");
+
+    const response = await fetch(`${BACKEND_URL}/api/v1/calls/${id}/recording`, {
+      method: "DELETE",
+      headers: {
+        ...(authHeader ? { Authorization: authHeader } : {}),
+      },
+    });
+
+    const data = await response.json().catch(() => ({}));
+    return NextResponse.json(data, { status: response.status });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error?.message || "Failed to delete recording" },
+      { status: 500 },
+    );
+  }
+}

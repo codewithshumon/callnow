@@ -326,10 +326,16 @@ export default function MessageThread() {
                   "mt-1.5 flex items-center justify-end gap-1 text-[10px]",
                   isOutbound ? "text-primary-foreground/75" : "text-muted-foreground"
                 )}>
-                  <span>
+                  <span className="font-mono">
+                    {new Date(msg.createdAt).toLocaleDateString([], {
+                      month: "short",
+                      day: "numeric",
+                    })}{" "}
+                    •{" "}
                     {new Date(msg.createdAt).toLocaleTimeString([], {
-                      hour: "2-digit",
+                      hour: "numeric",
                       minute: "2-digit",
+                      hour12: true,
                     })}
                   </span>
                   {isOutbound && statusIcon(msg.status)}

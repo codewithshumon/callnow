@@ -10,6 +10,7 @@ import {
   Clock,
   Info,
   FileAudio,
+  Trash2,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import StatusBadge from "@/components/shared/StatusBadge";
@@ -24,6 +25,7 @@ interface Props {
   call: Call;
   contacts?: Contact[];
   onOpenDetails: (call: Call) => void;
+  onDeleteRecording?: (callId: string) => void;
 }
 
 function formatPhone(num: string) {
@@ -36,7 +38,12 @@ function formatPhone(num: string) {
   }
 }
 
-export default function CallHistoryItem({ call, contacts = [], onOpenDetails }: Props) {
+export default function CallHistoryItem({
+  call,
+  contacts = [],
+  onOpenDetails,
+  onDeleteRecording,
+}: Props) {
   const isOutbound = call.direction === "outbound";
   const isMissed = call.status === "no-answer" || call.status === "busy" || call.status === "failed";
   const contactNumber = isOutbound ? call.toNumber : call.fromNumber;
@@ -91,6 +98,12 @@ export default function CallHistoryItem({ call, contacts = [], onOpenDetails }: 
                   {call.provider}
                 </span>
               )}
+              {call.recordingUrl && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded px-1.5 py-0.5">
+                  <FileAudio className="h-3 w-3" />
+                  Recorded
+                </span>
+              )}
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3 text-xs text-muted-foreground mt-1 flex-wrap">
@@ -99,8 +112,8 @@ export default function CallHistoryItem({ call, contacts = [], onOpenDetails }: 
                   {formatPhone(contactNumber)}
                 </span>
               )}
-              <span className="flex items-center gap-1 font-mono text-[11px]">
-                <Clock className="h-3 w-3" />
+              <span className="flex items-center gap-1 font-mono text-[11px] font-medium text-foreground">
+                <Clock className="h-3 w-3 text-muted-foreground" />
                 <DurationDisplay seconds={call.durationSeconds} />
               </span>
               <span>•</span>
@@ -108,7 +121,7 @@ export default function CallHistoryItem({ call, contacts = [], onOpenDetails }: 
                 ${Number(call.cost || 0).toFixed(4)}
               </span>
               <span>•</span>
-              <TimestampDisplay iso={call.startedAt} relative={true} />
+              <TimestampDisplay iso={call.startedAt || call.createdAt} mode="both" />
             </div>
           </div>
         </div>
@@ -153,14 +166,29 @@ export default function CallHistoryItem({ call, contacts = [], onOpenDetails }: 
 
       {/* Recording Player Bar (if call has recording) */}
       {call.recordingUrl && (
-        <div className="pt-1 border-t border-border/50">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1 shrink-0">
-              <FileAudio className="h-3.5 w-3.5 text-primary" /> Recording:
-            </span>
-            <div className="flex-1">
-              <InlineAudioPlayer src={call.recordingUrl} compact={true} />
+        <div className="pt-2 border-t border-border/50">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+              <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1 shrink-0">
+                <FileAudio className="h-3.5 w-3.5 text-primary" /> Audio:
+              </span>
+              <div className="flex-1">
+                <InlineAudioPlayer src={call.recordingUrl} compact={true} />
+              </div>
             </div>
+
+            {onDeleteRecording && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDeleteRecording(call.id)}
+                className="h-7 px-2 text-[11px] text-destructive hover:bg-destructive/10 hover:text-destructive gap-1"
+                title="Delete recording"
+              >
+                <Trash2 className="h-3 w-3" />
+                <span>Delete</span>
+              </Button>
+            )}
           </div>
         </div>
       )}

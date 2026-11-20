@@ -12,8 +12,9 @@ database/*.dump
 *.dump
 
 # Local uploads and media
-uploads/
-recordings/
+/uploads/
+backend/uploads/
+/recordings/
 
 # Dependencies and builds
 node_modules/

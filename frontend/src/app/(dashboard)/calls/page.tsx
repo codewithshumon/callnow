@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getPaginated } from "@/lib/api";
+import { getPaginated, del } from "@/lib/api";
 import { useCallStore } from "@/store/callStore";
 import CallHistoryItem from "./_components/CallHistoryItem";
 import CallDetailSheet from "./_components/CallDetailSheet";
@@ -171,6 +171,20 @@ export default function CallHistoryPage() {
     const start = (page - 1) * limit;
     return filteredCalls.slice(start, start + limit);
   }, [filteredCalls, page, limit]);
+
+  // Delete Recording Handler
+  const handleDeleteRecording = async (callId: string) => {
+    if (!window.confirm("Are you sure you want to permanently delete this call recording?")) {
+      return;
+    }
+    try {
+      await del(`/calls/${callId}/recording`);
+      toast.success("Call recording deleted");
+      fetchCalls();
+    } catch {
+      toast.error("Failed to delete call recording");
+    }
+  };
 
   // Export CSV Handler
   const handleExportCsv = () => {
@@ -554,6 +568,7 @@ export default function CallHistoryPage() {
               call={call}
               contacts={contacts}
               onOpenDetails={(c) => setSelectedCall(c)}
+              onDeleteRecording={handleDeleteRecording}
             />
           ))
         )}

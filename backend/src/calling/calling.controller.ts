@@ -3,8 +3,10 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Param,
   Query,
+  Req,
   UseGuards,
   HttpCode,
   Res,
@@ -50,6 +52,7 @@ export class CallingController {
       query.page,
       query.limit,
       query.direction,
+      query.hasRecording === 'true',
     );
   }
 
@@ -115,9 +118,26 @@ export class CallingController {
     @CurrentUser('id') userId: string,
     @Param('callSid') callSid: string,
     @UploadedFile() file: Express.Multer.File,
+    @Req() req: any,
   ) {
     const filename = file?.filename || `${callSid}.webm`;
-    return this.callingService.saveCallRecording(userId, callSid, filename);
+    const toNumber = req.body?.toNumber;
+    const fromNumber = req.body?.fromNumber;
+    const direction = req.body?.direction;
+    return this.callingService.saveCallRecording(userId, callSid, filename, {
+      toNumber,
+      fromNumber,
+      direction,
+    });
+  }
+
+  // Delete call recording
+  @Delete('calls/:id/recording')
+  async deleteCallRecording(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+  ) {
+    return this.callingService.deleteCallRecording(userId, id);
   }
 
   // Stream local call recording audio
