@@ -147,6 +147,8 @@ export interface Call {
   recordingUrl?: string;
   startedAt: string;
   endedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Voicemail {

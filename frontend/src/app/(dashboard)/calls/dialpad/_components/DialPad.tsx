@@ -631,7 +631,7 @@ export default function DialPad() {
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <span className="capitalize">{c.direction}</span>
                                 <span>•</span>
-                                <span>{new Date(c.startedAt || c.createdAt).toLocaleDateString()}</span>
+                                <span>{new Date(c.startedAt || c.createdAt || Date.now()).toLocaleDateString()}</span>
                                 {c.durationSeconds > 0 && (
                                   <>
                                     <span>•</span>
