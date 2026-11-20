@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallStore } from "@/store/callStore";
+import { startRingbackTone, stopRingbackTone } from "@/lib/dtmf";
 import type { CallToken } from "@/lib/types";
 
 // ── Twilio Voice SDK types (dynamic import) ─────────────────
@@ -302,6 +303,8 @@ function setupTwilioCallHandlers(twilioCall: TwilioCall): void {
   if (!twilioCall || typeof twilioCall.on !== "function") return;
 
   twilioCall.on("accept", () => {
+    stopRingbackTone();
+    useCallStore.getState().setCallStatus("in-progress");
     currentCall = twilioCall;
     // Auto-record both sides locally with 0 Twilio recording fees
     const remoteStream =
@@ -311,6 +314,7 @@ function setupTwilioCallHandlers(twilioCall: TwilioCall): void {
   });
 
   const handleEnd = () => {
+    stopRingbackTone();
     const sid =
       (twilioCall as any).parameters?.CallSid ||
       (twilioCall as any).customParameters?.get?.("CallSid") ||
@@ -369,6 +373,7 @@ export async function makeCall(params: {
   activeCallMetadata = { to: cleanTo, from: cleanFrom };
 
   setupTwilioCallHandlers(call);
+  startRingbackTone();
 
   useCallStore.getState().startCall(
     (call as any).parameters?.CallSid || `outbound-${Date.now()}`,
@@ -380,6 +385,7 @@ export async function makeCall(params: {
 // ── Hang up ─────────────────────────────────────────────────
 
 export function hangUp(): void {
+  stopRingbackTone();
   if (currentCall) {
     currentCall.disconnect();
     currentCall = null;

@@ -62,17 +62,29 @@ export default function CallHistoryPage() {
   const fetchCalls = useCallback(async (showToast = false) => {
     try {
       if (showToast) setRefreshing(true);
-      const params: Record<string, unknown> = { page: 1, limit: 100 };
+      const params: Record<string, unknown> = { page: 1, limit: 50 };
       const [callsRes, contactsRes] = await Promise.allSettled([
         getPaginated<Call>("/calls", params),
-        getPaginated<Contact>("/contacts", { limit: 100 }),
+        getPaginated<Contact>("/contacts", { limit: 50 }),
       ]);
 
       if (callsRes.status === "fulfilled") {
-        setCalls(callsRes.value.data || []);
+        const val = callsRes.value as any;
+        const list: Call[] = Array.isArray(val?.data)
+          ? val.data
+          : Array.isArray(val)
+          ? val
+          : [];
+        setCalls(list);
       }
       if (contactsRes.status === "fulfilled") {
-        setContacts(contactsRes.value.data || []);
+        const val = contactsRes.value as any;
+        const list: Contact[] = Array.isArray(val?.data)
+          ? val.data
+          : Array.isArray(val)
+          ? val
+          : [];
+        setContacts(list);
       }
 
       if (showToast) {

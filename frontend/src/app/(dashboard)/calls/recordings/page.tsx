@@ -72,12 +72,18 @@ export default function CallRecordingsPage() {
     try {
       if (showToast) setRefreshing(true);
       const [callsRes, contactsRes] = await Promise.allSettled([
-        getPaginated<Call>("/calls", { page: 1, limit: 100 }),
-        getPaginated<Contact>("/contacts", { limit: 100 }),
+        getPaginated<Call>("/calls", { page: 1, limit: 50 }),
+        getPaginated<Contact>("/contacts", { limit: 50 }),
       ]);
 
       if (callsRes.status === "fulfilled") {
-        const allCalls = callsRes.value.data || [];
+        const val = callsRes.value as any;
+        const allCalls: Call[] = Array.isArray(val?.data)
+          ? val.data
+          : Array.isArray(val)
+          ? val
+          : [];
+
         // Keep only calls that have a recording and are valid
         const recordedCalls = allCalls.filter(
           (c) =>
@@ -89,7 +95,13 @@ export default function CallRecordingsPage() {
       }
 
       if (contactsRes.status === "fulfilled") {
-        setContacts(contactsRes.value.data || []);
+        const val = contactsRes.value as any;
+        const list: Contact[] = Array.isArray(val?.data)
+          ? val.data
+          : Array.isArray(val)
+          ? val
+          : [];
+        setContacts(list);
       }
 
       if (showToast) {

@@ -93,7 +93,49 @@ export default function DialPad() {
   const [calling, setCalling] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showInCallKeypad, setShowInCallKeypad] = useState(false);
+  const [playingCallId, setPlayingCallId] = useState<string | null>(null);
+  const dialpadAudioRef = useRef<HTMLAudioElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Audio cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (dialpadAudioRef.current) {
+        dialpadAudioRef.current.pause();
+        dialpadAudioRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleTogglePlayRecording = useCallback((e: React.MouseEvent, call: Call) => {
+    e.stopPropagation();
+    if (!call.recordingUrl) return;
+
+    if (playingCallId === call.id) {
+      dialpadAudioRef.current?.pause();
+      setPlayingCallId(null);
+    } else {
+      if (!dialpadAudioRef.current) {
+        dialpadAudioRef.current = new Audio();
+        dialpadAudioRef.current.onended = () => setPlayingCallId(null);
+        dialpadAudioRef.current.onerror = () => {
+          toast.error("Could not play audio recording");
+          setPlayingCallId(null);
+        };
+      }
+      dialpadAudioRef.current.src = call.recordingUrl;
+      dialpadAudioRef.current
+        .play()
+        .then(() => {
+          setPlayingCallId(call.id);
+          toast.info(`Playing recording for ${call.toNumber || call.fromNumber}`);
+        })
+        .catch(() => {
+          toast.error("Audio playback blocked by browser or failed");
+          setPlayingCallId(null);
+        });
+    }
+  }, [playingCallId]);
 
   // Sync prefill from URL
   useEffect(() => {
@@ -637,12 +679,29 @@ export default function DialPad() {
                                   {dialNumber}
                                 </p>
                                 {c.recordingUrl && (
-                                  <span
-                                    className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.2 rounded"
-                                    title="Call recorded"
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleTogglePlayRecording(e, c)}
+                                    className={cn(
+                                      "inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full transition-all cursor-pointer shadow-xs",
+                                      playingCallId === c.id
+                                        ? "bg-emerald-500 text-white animate-pulse"
+                                        : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/30"
+                                    )}
+                                    title={playingCallId === c.id ? "Pause recording" : "Click to listen to recording"}
                                   >
-                                    <FileAudio className="h-2.5 w-2.5" /> Rec
-                                  </span>
+                                    {playingCallId === c.id ? (
+                                      <>
+                                        <Pause className="h-3 w-3 fill-current" />
+                                        <span>Playing</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Play className="h-3 w-3 fill-current" />
+                                        <span>Rec</span>
+                                      </>
+                                    )}
+                                  </button>
                                 )}
                               </div>
                               <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
