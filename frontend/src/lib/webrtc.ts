@@ -191,24 +191,135 @@ async function initTwilioDevice(token: string): Promise<void> {
   console.debug("[WebRTC] Twilio device registered");
 }
 
+// ── Zero-Cost Local Browser Call Recorder ───────────────────
+
+class BrowserAudioRecorder {
+  private mediaRecorder: MediaRecorder | null = null;
+  private audioChunks: Blob[] = [];
+  private audioContext: AudioContext | null = null;
+  private micStream: MediaStream | null = null;
+
+  async startRecording(remoteStream?: MediaStream | null) {
+    if (typeof window === "undefined") return;
+    try {
+      this.audioChunks = [];
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      this.audioContext = new AudioCtx();
+      const dest = this.audioContext.createMediaStreamDestination();
+
+      // 1. Capture local microphone
+      try {
+        this.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const micSource = this.audioContext.createMediaStreamSource(this.micStream);
+        micSource.connect(dest);
+      } catch (err) {
+        console.warn("[Recorder] Mic stream capture failed:", err);
+      }
+
+      // 2. Capture remote audio stream from recipient
+      if (remoteStream && remoteStream.getAudioTracks().length > 0) {
+        try {
+          const remoteSource = this.audioContext.createMediaStreamSource(remoteStream);
+          remoteSource.connect(dest);
+        } catch (err) {
+          console.warn("[Recorder] Remote stream capture failed:", err);
+        }
+      }
+
+      const streamToRecord = dest.stream.getAudioTracks().length > 0 ? dest.stream : this.micStream;
+      if (!streamToRecord) return;
+
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : "audio/webm";
+
+      this.mediaRecorder = new MediaRecorder(streamToRecord, { mimeType });
+
+      this.mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          this.audioChunks.push(event.data);
+        }
+      };
+
+      this.mediaRecorder.start(1000);
+      console.debug("[Recorder] Zero-cost call recording started automatically");
+    } catch (err) {
+      console.warn("[Recorder] Failed to start local recording:", err);
+    }
+  }
+
+  async stopRecordingAndUpload(callSid: string): Promise<void> {
+    if (!this.mediaRecorder || this.mediaRecorder.state === "inactive") return;
+
+    return new Promise((resolve) => {
+      this.mediaRecorder!.onstop = async () => {
+        try {
+          const audioBlob = new Blob(this.audioChunks, { type: "audio/webm" });
+          if (audioBlob.size > 500) {
+            const formData = new FormData();
+            formData.append("audio", audioBlob, `${callSid}.webm`);
+
+            await fetch(`/api/calls/${encodeURIComponent(callSid)}/recording`, {
+              method: "POST",
+              body: formData,
+            });
+            console.debug(`[Recorder] Recording auto-saved locally for call ${callSid}`);
+          }
+        } catch (err) {
+          console.warn("[Recorder] Failed to upload local recording:", err);
+        } finally {
+          if (this.micStream) {
+            this.micStream.getTracks().forEach((t) => t.stop());
+            this.micStream = null;
+          }
+          if (this.audioContext) {
+            this.audioContext.close().catch(() => {});
+            this.audioContext = null;
+          }
+          this.mediaRecorder = null;
+          this.audioChunks = [];
+          resolve();
+        }
+      };
+
+      this.mediaRecorder!.stop();
+    });
+  }
+}
+
+const callRecorder = new BrowserAudioRecorder();
+
 // ── Twilio call event handlers ──────────────────────────────
 
 function setupTwilioCallHandlers(twilioCall: TwilioCall): void {
+  if (!twilioCall || typeof twilioCall.on !== "function") return;
+
+  const sid =
+    (twilioCall as any).parameters?.CallSid ||
+    (twilioCall as any).customParameters?.get?.("CallSid") ||
+    `call-${Date.now()}`;
+
   twilioCall.on("accept", () => {
     currentCall = twilioCall;
+    // Auto-record both sides locally with 0 Twilio recording fees
+    const remoteStream =
+      (twilioCall as any).getRemoteStream?.() ||
+      (twilioCall as any)._mediaHandler?._remoteStream;
+    callRecorder.startRecording(remoteStream);
   });
 
-  twilioCall.on("disconnect", () => {
+  const handleEnd = () => {
     currentCall = null;
+    callRecorder.stopRecordingAndUpload(sid);
     useCallStore.getState().endCall();
-  });
+  };
 
-  twilioCall.on("cancel", () => {
-    currentCall = null;
-  });
-
-  twilioCall.on("reject", () => {
-    currentCall = null;
+  twilioCall.on("disconnect", handleEnd);
+  twilioCall.on("cancel", handleEnd);
+  twilioCall.on("reject", handleEnd);
+  twilioCall.on("error", (error: any) => {
+    console.error("[WebRTC] Call error:", error);
+    handleEnd();
   });
 }
 
@@ -222,7 +333,20 @@ export async function makeCall(params: {
     throw new Error("WebRTC device not initialized. Call getToken() first.");
   }
 
-  const call = device.connect({ params }) as TwilioCall;
+  // Sanitize numbers to clean E.164 (strip spaces, parentheses, dashes)
+  const cleanTo = params.to.replace(/[^\d+]/g, "");
+  const cleanFrom = params.from.replace(/[^\d+]/g, "");
+
+  // Pass both To/to and From/from so TwiML Bin Mustache templates match regardless of casing
+  const callResult = device.connect({
+    params: {
+      To: cleanTo,
+      to: cleanTo,
+      From: cleanFrom,
+      from: cleanFrom,
+    },
+  });
+  const call = (callResult instanceof Promise ? await callResult : callResult) as TwilioCall;
   currentCall = call;
 
   setupTwilioCallHandlers(call);

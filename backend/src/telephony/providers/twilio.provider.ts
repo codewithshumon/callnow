@@ -340,6 +340,30 @@ export class TwilioProvider implements TelephonyProvider {
     }
   }
 
+  /** Fetch recent call logs directly from Twilio REST API */
+  async listRecentCalls(limit = 50): Promise<any[]> {
+    if (!this.client) return [];
+    try {
+      const calls = await this.client.calls.list({ limit });
+      return calls;
+    } catch (error) {
+      this.logger.error('Failed to list calls from Twilio API', error);
+      return [];
+    }
+  }
+
+  /** Fetch recent SMS messages directly from Twilio REST API */
+  async listRecentMessages(limit = 50): Promise<any[]> {
+    if (!this.client) return [];
+    try {
+      const messages = await this.client.messages.list({ limit });
+      return messages;
+    } catch (error) {
+      this.logger.error('Failed to list messages from Twilio API', error);
+      return [];
+    }
+  }
+
   /** 2.2.9 — Generate TwiML call control response */
   generateCallControlResponse(action: CallControlAction): string {
     const twiml = new TwilioTwiml.VoiceResponse();

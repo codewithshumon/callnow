@@ -16,7 +16,6 @@ export class RedisService implements OnModuleDestroy {
   getClient(): Redis {
     if (!this.client) {
       this.client = new Redis(this.redisUrl, {
-        lazyConnect: true,
         maxRetriesPerRequest: 3,
         retryStrategy(times) {
           return Math.min(times * 100, 3000);

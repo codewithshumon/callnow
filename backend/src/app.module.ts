@@ -57,7 +57,7 @@ import Redis from 'ioredis';
         return {
           throttlers: [{ ttl: 60_000, limit: 100 }],
           storage: new RedisThrottlerStorage(
-            new Redis(redisUrl, { lazyConnect: true }),
+            new Redis(redisUrl),
           ),
         };
       },
@@ -71,6 +71,7 @@ import Redis from 'ioredis';
         connection: {
           url:
             configService.get<string>('redis.url') || 'redis://localhost:6383',
+          maxRetriesPerRequest: null,
         },
       }),
     }),

@@ -140,6 +140,15 @@ export default function DialPad() {
     }
   }, [voiceNumbers, fromNumber]);
 
+  // Auto-refresh recent calls when a call ends
+  useEffect(() => {
+    if (!activeCall) {
+      getPaginated<Call>("/calls", { limit: 10 })
+        .then((r) => setRecentCalls(r.data || []))
+        .catch(() => {});
+    }
+  }, [activeCall]);
+
   // Keypad audio & digit appending
   const handleDigitPress = useCallback(
     (digit: string) => {
@@ -622,7 +631,7 @@ export default function DialPad() {
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <span className="capitalize">{c.direction}</span>
                                 <span>•</span>
-                                <span>{new Date(c.startedAt).toLocaleDateString()}</span>
+                                <span>{new Date(c.startedAt || c.createdAt).toLocaleDateString()}</span>
                                 {c.durationSeconds > 0 && (
                                   <>
                                     <span>•</span>

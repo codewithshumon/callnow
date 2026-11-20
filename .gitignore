@@ -1,2 +1,26 @@
+# Local environment files
+*.env
+*.env.*
+.env
+.env.*
+!*.env.example
+
+# Local database dumps & backups
+database/*.sql
+database/*.dump
+*.sql
+*.dump
+
+# Local uploads and media
+uploads/
+recordings/
+
+# Dependencies and builds
+node_modules/
+dist/
+.next/
+bin/
+
+# Tool artifacts
 .claude/
 z-report/

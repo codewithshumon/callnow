@@ -9,12 +9,19 @@ import {
   HttpCode,
   Res,
   NotFoundException,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as path from 'path';
+import * as fs from 'fs';
 import type { Response } from 'express';
 import { CallingService } from './calling.service';
 import { CallQueryDto } from './dto/call-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @Controller()
 @UseGuards(JwtAuthGuard)
@@ -77,5 +84,63 @@ export class CallingController {
       });
     }
     return res.redirect(url);
+  }
+
+  // Upload locally recorded call audio (Zero Twilio Recording Cost)
+  @Post('calls/:callSid/recording')
+  @UseInterceptors(
+    FileInterceptor('audio', {
+      storage: diskStorage({
+        destination: (_req, _file, cb) => {
+          const uploadDir = path.join(process.cwd(), 'uploads', 'recordings');
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
+          cb(null, uploadDir);
+        },
+        filename: (req, _file, cb) => {
+          const rawSid = Array.isArray(req.params.callSid)
+            ? req.params.callSid[0]
+            : req.params.callSid || '';
+          const sid = (rawSid || `call-${Date.now()}`).replace(
+            /[^a-zA-Z0-9_-]/g,
+            '',
+          );
+          cb(null, `${sid}.webm`);
+        },
+      }),
+    }),
+  )
+  async uploadCallRecording(
+    @CurrentUser('id') userId: string,
+    @Param('callSid') callSid: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const filename = file?.filename || `${callSid}.webm`;
+    return this.callingService.saveCallRecording(userId, callSid, filename);
+  }
+
+  // Stream local call recording audio
+  @Get('calls/recordings/:filename')
+  @Public()
+  async getLocalRecording(
+    @Param('filename') filename: string,
+    @Res() res: Response,
+  ) {
+    const sanitizedFilename = path.basename(filename);
+    const filePath = path.join(
+      process.cwd(),
+      'uploads',
+      'recordings',
+      sanitizedFilename,
+    );
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Call recording not found',
+      });
+    }
+    res.setHeader('Content-Type', 'audio/webm');
+    return res.sendFile(filePath);
   }
 }

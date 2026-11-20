@@ -28,6 +28,9 @@ export class MessagingService {
 
   // 5.1.2 — Get conversations (paginated)
   async getConversations(userId: string, page = 1, limit = 20) {
+    // Auto-sync SMS messages from Twilio
+    await this.syncTwilioMessages(userId);
+
     const [data, total] = await Promise.all([
       this.prisma.conversation.findMany({
         where: { userId },
@@ -39,6 +42,74 @@ export class MessagingService {
     ]);
 
     return { data, meta: { page, limit, total } };
+  }
+
+  async syncTwilioMessages(userId: string) {
+    if (typeof (this.telephonyProvider as any).listRecentMessages !== 'function') return;
+    try {
+      const messages = await (this.telephonyProvider as any).listRecentMessages(50);
+      for (const m of messages) {
+        if (!m.body && (!m.numMedia || m.numMedia === '0')) continue;
+
+        const isOutbound = m.direction?.includes('outbound');
+        const userNumber = isOutbound ? m.from : m.to;
+        const contactNumber = isOutbound ? m.to : m.from;
+
+        if (!userNumber || !contactNumber) continue;
+
+        const msgDate = m.dateCreated || m.dateSent ? new Date(m.dateCreated || m.dateSent) : new Date();
+
+        // Find or create conversation
+        let conversation = await this.prisma.conversation.findUnique({
+          where: {
+            userId_fromNumber_toNumber: {
+              userId,
+              fromNumber: userNumber,
+              toNumber: contactNumber,
+            },
+          },
+        });
+
+        if (!conversation) {
+          conversation = await this.prisma.conversation.create({
+            data: {
+              userId,
+              fromNumber: userNumber,
+              toNumber: contactNumber,
+              lastMessageAt: msgDate,
+            },
+          });
+        }
+
+        // Check if message exists by providerSid
+        const existingMsg = await this.prisma.message.findFirst({
+          where: { providerSid: m.sid },
+        });
+
+        if (!existingMsg) {
+          await this.prisma.message.create({
+            data: {
+              conversationId: conversation.id,
+              providerSid: m.sid,
+              provider: 'twilio',
+              direction: isOutbound ? 'outbound' : 'inbound',
+              body: m.body || '',
+              status: m.status || 'delivered',
+              createdAt: msgDate,
+            },
+          });
+
+          if (!conversation.lastMessageAt || msgDate > conversation.lastMessageAt) {
+            await this.prisma.conversation.update({
+              where: { id: conversation.id },
+              data: { lastMessageAt: msgDate },
+            });
+          }
+        }
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to auto-sync Twilio messages: ${err}`);
+    }
   }
 
   // 5.1.3 — Get messages in a conversation
