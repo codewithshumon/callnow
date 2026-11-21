@@ -29,6 +29,8 @@ import {
   FileAudio,
   Bell,
   BellOff,
+  ShieldCheck,
+  ShieldOff,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +46,15 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { get, getPaginated } from "@/lib/api";
-import { initializeCallClient, makeCall, hangUp, toggleMute, sendDigits as sendWebRtcDigits } from "@/lib/webrtc";
+import {
+  initializeCallClient,
+  makeCall,
+  hangUp,
+  toggleMute,
+  sendDigits as sendWebRtcDigits,
+  isAntiVoicemailEnabled,
+  setAntiVoicemailEnabled,
+} from "@/lib/webrtc";
 import { useCallStore } from "@/store/callStore";
 import { playDtmfTone, isRingbackToneEnabled, setRingbackToneEnabled } from "@/lib/dtmf";
 import { toast } from "sonner";
@@ -95,14 +105,16 @@ export default function DialPad() {
   const [calling, setCalling] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [ringingSoundEnabled, setRingingSoundEnabled] = useState(true);
+  const [antiVoicemailEnabled, setAntiVoicemailEnabledState] = useState(true);
   const [showInCallKeypad, setShowInCallKeypad] = useState(false);
   const [playingCallId, setPlayingCallId] = useState<string | null>(null);
   const dialpadAudioRef = useRef<HTMLAudioElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize ringing sound preference from localStorage
+  // Initialize ringing sound and anti-voicemail preferences from localStorage
   useEffect(() => {
     setRingingSoundEnabled(isRingbackToneEnabled());
+    setAntiVoicemailEnabledState(isAntiVoicemailEnabled());
   }, []);
 
   const toggleRingingSound = useCallback(() => {
@@ -115,6 +127,17 @@ export default function DialPad() {
       toast.info("Ringing sound muted (silent ringing)");
     }
   }, [ringingSoundEnabled]);
+
+  const toggleAntiVoicemail = useCallback(() => {
+    const next = !antiVoicemailEnabled;
+    setAntiVoicemailEnabledState(next);
+    setAntiVoicemailEnabled(next);
+    if (next) {
+      toast.success("Anti-Voicemail ON: Auto-stops call at 20s if unanswered to avoid $0.014 charge");
+    } else {
+      toast.info("Anti-Voicemail OFF: Calls will ring normally into voicemail");
+    }
+  }, [antiVoicemailEnabled]);
 
   // Audio cleanup on unmount
   useEffect(() => {
@@ -392,6 +415,36 @@ export default function DialPad() {
             )}
           </Button>
 
+          {/* Anti-Voicemail Protection Setting (20s Ring Timeout) */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleAntiVoicemail}
+            className={cn(
+              "text-xs gap-1.5 transition-all cursor-pointer shadow-2xs",
+              antiVoicemailEnabled
+                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+                : "text-muted-foreground border-dashed hover:text-foreground"
+            )}
+            title={
+              antiVoicemailEnabled
+                ? "Anti-Voicemail: ON (Auto-ends call at 20s if unanswered to avoid $0.014 charge)"
+                : "Anti-Voicemail: OFF (Allows call to ring indefinitely until carrier voicemail answers)"
+            }
+          >
+            {antiVoicemailEnabled ? (
+              <>
+                <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                <span>Anti-Voicemail ON</span>
+              </>
+            ) : (
+              <>
+                <ShieldOff className="h-4 w-4 text-muted-foreground" />
+                <span>Anti-Voicemail OFF</span>
+              </>
+            )}
+          </Button>
+
           {/* Keypad DTMF Sound Setting */}
           <Button
             variant="outline"
@@ -479,6 +532,11 @@ export default function DialPad() {
                       <Clock className="h-3.5 w-3.5 text-primary" />
                       {formatDuration(activeCall.duration)}
                       <span className="text-muted-foreground capitalize">({activeCall.status})</span>
+                      {activeCall.status !== "in-progress" && antiVoicemailEnabled && (
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-sans font-medium flex items-center gap-0.5">
+                          <ShieldCheck className="h-3 w-3" /> Anti-VM (20s)
+                        </span>
+                      )}
                     </div>
                   </div>
 

@@ -3,6 +3,7 @@
 import { useCallStore } from "@/store/callStore";
 import { useAuthStore } from "@/store/authStore";
 import { startRingbackTone, stopRingbackTone } from "@/lib/dtmf";
+import { toast } from "sonner";
 import type { CallToken } from "@/lib/types";
 
 // ── Twilio Voice SDK types (dynamic import) ─────────────────
@@ -461,12 +462,43 @@ class BrowserAudioRecorder {
 const callRecorder = new BrowserAudioRecorder();
 let activeCallMetadata: { to: string; from: string } | null = null;
 
+// ── Anti-Voicemail Protection (20s Ring Timeout) ──────────────
+
+let antiVoicemailEnabled = true;
+const VOICEMAIL_PROTECTION_TIMEOUT_MS = 20000; // 20s cutoff (approx 4 rings before carrier voicemail connects)
+let voicemailProtectionTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function isAntiVoicemailEnabled(): boolean {
+  if (typeof window !== "undefined") {
+    const stored = localStorage.getItem("anti_voicemail_timeout_enabled");
+    if (stored !== null) {
+      antiVoicemailEnabled = stored === "true";
+    }
+  }
+  return antiVoicemailEnabled;
+}
+
+export function setAntiVoicemailEnabled(enabled: boolean): void {
+  antiVoicemailEnabled = enabled;
+  if (typeof window !== "undefined") {
+    localStorage.setItem("anti_voicemail_timeout_enabled", String(enabled));
+  }
+}
+
+export function clearVoicemailProtectionTimer(): void {
+  if (voicemailProtectionTimer) {
+    clearTimeout(voicemailProtectionTimer);
+    voicemailProtectionTimer = null;
+  }
+}
+
 // ── Twilio call event handlers ──────────────────────────────
 
 function setupTwilioCallHandlers(twilioCall: TwilioCall): void {
   if (!twilioCall || typeof twilioCall.on !== "function") return;
 
   twilioCall.on("accept", () => {
+    clearVoicemailProtectionTimer();
     stopRingbackTone();
     useCallStore.getState().setCallStatus("in-progress");
     currentCall = twilioCall;
@@ -475,6 +507,7 @@ function setupTwilioCallHandlers(twilioCall: TwilioCall): void {
   });
 
   const handleEnd = () => {
+    clearVoicemailProtectionTimer();
     stopRingbackTone();
     const sid =
       (twilioCall as any).parameters?.CallSid ||
@@ -528,6 +561,8 @@ export async function makeCall(params: {
   const cleanTo = params.to.replace(/[^\d+]/g, "");
   const cleanFrom = params.from.replace(/[^\d+]/g, "");
 
+  const vmProtectionActive = isAntiVoicemailEnabled();
+
   // Pass both To/to and From/from so TwiML Bin Mustache templates match regardless of casing
   const callResult = device.connect({
     params: {
@@ -535,6 +570,7 @@ export async function makeCall(params: {
       to: cleanTo,
       From: cleanFrom,
       from: cleanFrom,
+      ...(vmProtectionActive ? { Timeout: "20", timeout: "20" } : {}),
     },
   });
   const call = (callResult instanceof Promise ? await callResult : callResult) as TwilioCall;
@@ -543,6 +579,25 @@ export async function makeCall(params: {
 
   setupTwilioCallHandlers(call);
   startRingbackTone();
+
+  // Start Anti-Voicemail 20s safety timer if enabled
+  clearVoicemailProtectionTimer();
+  if (vmProtectionActive) {
+    voicemailProtectionTimer = setTimeout(() => {
+      const activeCall = useCallStore.getState().activeCall;
+      // If call is still ringing / not accepted by a human after 20s
+      if (currentCall && activeCall && activeCall.status !== "in-progress") {
+        console.info(
+          "[WebRTC] Anti-Voicemail Protection: Call not answered in 20s. Disconnecting before voicemail triggers charges ($0.00)."
+        );
+        showToast(
+          "info",
+          "Call auto-ended after 20s of ringing to prevent voicemail charge ($0.00)."
+        );
+        hangUp();
+      }
+    }, VOICEMAIL_PROTECTION_TIMEOUT_MS);
+  }
 
   useCallStore.getState().startCall(
     (call as any).parameters?.CallSid || `outbound-${Date.now()}`,
@@ -554,6 +609,7 @@ export async function makeCall(params: {
 // ── Hang up ─────────────────────────────────────────────────
 
 export function hangUp(): void {
+  clearVoicemailProtectionTimer();
   stopRingbackTone();
   if (currentCall) {
     currentCall.disconnect();
@@ -627,16 +683,18 @@ export function isDeviceReady(): boolean {
   return device !== null;
 }
 
-// ── Toast helper (avoids direct sonner import in lib) ────────
-
-function showToast(type: "error", message: string): void {
-  // Dispatch a custom event that the layout can listen to,
-  // or use a dynamic import for sonner
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(
-      new CustomEvent("voiceseek:toast", {
-        detail: { type, message },
-      })
-    );
+function showToast(type: "error" | "info" | "success", message: string): void {
+  try {
+    if (type === "error") toast.error(message);
+    else if (type === "success") toast.success(message);
+    else toast.info(message);
+  } catch {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("voiceseek:toast", {
+          detail: { type, message },
+        })
+      );
+    }
   }
 }
