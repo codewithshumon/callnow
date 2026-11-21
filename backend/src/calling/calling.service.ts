@@ -158,13 +158,17 @@ export class CallingService {
       },
     });
 
-    // 2. If not found by SID and we have toNumber, match the most recent call
-    if (!existing && meta?.toNumber) {
+    // 2. If not found by SID and we have toNumber, match the most recent call to that number (last 24 hours)
+    const cleanTo = meta?.toNumber?.replace(/[^\d]/g, '');
+    if (!existing && cleanTo && cleanTo.length >= 7) {
       existing = await this.prisma.call.findFirst({
         where: {
           userId,
-          toNumber: meta.toNumber,
-          createdAt: { gte: new Date(Date.now() - 5 * 60 * 1000) },
+          OR: [
+            { toNumber: meta?.toNumber },
+            { toNumber: { contains: cleanTo } },
+          ],
+          createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
         },
         orderBy: { createdAt: 'desc' },
       });
@@ -173,12 +177,15 @@ export class CallingService {
     // 3. If still not found, try syncTwilioCalls to pull latest CDR from Twilio
     if (!existing) {
       await this.syncTwilioCalls(userId);
-      if (meta?.toNumber) {
+      if (cleanTo && cleanTo.length >= 7) {
         existing = await this.prisma.call.findFirst({
           where: {
             userId,
-            toNumber: meta.toNumber,
-            createdAt: { gte: new Date(Date.now() - 5 * 60 * 1000) },
+            OR: [
+              { toNumber: meta?.toNumber },
+              { toNumber: { contains: cleanTo } },
+            ],
+            createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
           },
           orderBy: { createdAt: 'desc' },
         });
@@ -191,13 +198,13 @@ export class CallingService {
         data: { recordingUrl },
       });
     } else {
-      // Find the single most recent call for this user within the last 5 minutes as fallback
+      // Find the single most recent call for this user within the last 24 hours as fallback
       const recentCall = await this.prisma.call.findFirst({
         where: {
           userId,
           fromNumber: { not: 'Browser' },
           toNumber: { not: 'Outbound' },
-          createdAt: { gte: new Date(Date.now() - 5 * 60 * 1000) },
+          createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
         },
         orderBy: { createdAt: 'desc' },
       });
@@ -273,6 +280,51 @@ export class CallingService {
       success: true,
       message: 'Call recording deleted successfully',
       callId: call.id,
+    };
+  }
+
+  // Delete all call recordings for a user
+  async deleteAllCallRecordings(userId: string) {
+    const callsWithRecordings = await this.prisma.call.findMany({
+      where: {
+        userId,
+        recordingUrl: { not: null },
+      },
+      select: { id: true, recordingUrl: true },
+    });
+
+    let deletedFiles = 0;
+    for (const call of callsWithRecordings) {
+      if (call.recordingUrl) {
+        const filename = path.basename(call.recordingUrl);
+        const filePath = path.join(process.cwd(), 'uploads', 'recordings', filename);
+        if (fs.existsSync(filePath)) {
+          try {
+            fs.unlinkSync(filePath);
+            deletedFiles++;
+          } catch (e) {
+            this.logger.warn(`Failed to unlink recording file ${filePath}: ${e}`);
+          }
+        }
+      }
+    }
+
+    const result = await this.prisma.call.updateMany({
+      where: {
+        userId,
+        recordingUrl: { not: null },
+      },
+      data: {
+        recordingUrl: null,
+        recordingDuration: null,
+      },
+    });
+
+    return {
+      success: true,
+      message: `Deleted ${result.count} recordings successfully`,
+      deletedCount: result.count,
+      deletedFiles,
     };
   }
 

@@ -70,9 +70,30 @@ export function playDtmfTone(digit: string, durationMs = 120): void {
 let ringbackInterval: ReturnType<typeof setInterval> | null = null;
 let activeRingOscillators: OscillatorNode[] = [];
 let activeRingGain: GainNode | null = null;
+let ringbackToneEnabled = true;
+
+export function isRingbackToneEnabled(): boolean {
+  if (typeof window !== "undefined") {
+    const stored = localStorage.getItem("ringback_tone_enabled");
+    if (stored !== null) {
+      ringbackToneEnabled = stored === "true";
+    }
+  }
+  return ringbackToneEnabled;
+}
+
+export function setRingbackToneEnabled(enabled: boolean): void {
+  ringbackToneEnabled = enabled;
+  if (typeof window !== "undefined") {
+    localStorage.setItem("ringback_tone_enabled", String(enabled));
+  }
+  if (!enabled) {
+    stopRingbackTone();
+  }
+}
 
 export function startRingbackTone(): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || !isRingbackToneEnabled()) return;
   stopRingbackTone();
 
   const playRingBurst = () => {

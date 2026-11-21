@@ -7,12 +7,13 @@ import { cn } from "@/lib/utils";
 
 interface InlineAudioPlayerProps {
   src: string;
+  fallbackDuration?: number;
   className?: string;
   compact?: boolean;
 }
 
 function formatAudioTime(seconds: number): string {
-  if (isNaN(seconds) || seconds < 0) return "0:00";
+  if (!isFinite(seconds) || isNaN(seconds) || seconds <= 0) return "0:00";
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
@@ -20,22 +21,61 @@ function formatAudioTime(seconds: number): string {
 
 export default function InlineAudioPlayer({
   src,
+  fallbackDuration = 0,
   className,
   compact = false,
 }: InlineAudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState<number>(fallbackDuration || 0);
   const [isMuted, setIsMuted] = useState(false);
   const [playbackRate, setPlaybackRate] = useState<number>(1);
+
+  // Sync fallback duration if provided
+  useEffect(() => {
+    if (fallbackDuration > 0 && (!isFinite(duration) || duration <= 0)) {
+      setDuration(fallbackDuration);
+    }
+  }, [fallbackDuration, duration]);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const onLoadedMetadata = () => setDuration(audio.duration || 0);
+    const onTimeUpdate = () => {
+      if (isFinite(audio.currentTime)) {
+        setCurrentTime(audio.currentTime);
+      }
+    };
+
+    const onLoadedMetadata = () => {
+      if (isFinite(audio.duration) && audio.duration > 0) {
+        setDuration(audio.duration);
+      } else if (fallbackDuration > 0) {
+        setDuration(fallbackDuration);
+      } else {
+        // Fast seek trick to calculate WebM duration in Chromium
+        try {
+          audio.currentTime = 1e101;
+          const onSeekToEnd = () => {
+            audio.removeEventListener("timeupdate", onSeekToEnd);
+            if (isFinite(audio.duration) && audio.duration > 0) {
+              setDuration(audio.duration);
+            }
+            audio.currentTime = 0;
+          };
+          audio.addEventListener("timeupdate", onSeekToEnd);
+        } catch {}
+      }
+    };
+
+    const onDurationChange = () => {
+      if (isFinite(audio.duration) && audio.duration > 0) {
+        setDuration(audio.duration);
+      }
+    };
+
     const onEnded = () => {
       setIsPlaying(false);
       setCurrentTime(0);
@@ -43,14 +83,23 @@ export default function InlineAudioPlayer({
 
     audio.addEventListener("timeupdate", onTimeUpdate);
     audio.addEventListener("loadedmetadata", onLoadedMetadata);
+    audio.addEventListener("durationchange", onDurationChange);
     audio.addEventListener("ended", onEnded);
 
     return () => {
       audio.removeEventListener("timeupdate", onTimeUpdate);
       audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+      audio.removeEventListener("durationchange", onDurationChange);
       audio.removeEventListener("ended", onEnded);
     };
-  }, []);
+  }, [fallbackDuration]);
+
+  const effectiveDuration =
+    isFinite(duration) && duration > 0
+      ? duration
+      : fallbackDuration > 0
+      ? fallbackDuration
+      : 0;
 
   const togglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -93,7 +142,10 @@ export default function InlineAudioPlayer({
     setPlaybackRate(nextRate);
   };
 
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const progress =
+    effectiveDuration > 0
+      ? Math.min(100, (currentTime / effectiveDuration) * 100)
+      : 0;
 
   if (compact) {
     return (
@@ -110,12 +162,12 @@ export default function InlineAudioPlayer({
           size="icon-xs"
           variant="ghost"
           onClick={togglePlay}
-          className="h-6 w-6 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground"
+          className="h-6 w-6 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground cursor-pointer"
         >
           {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3 ml-0.5" />}
         </Button>
         <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
-          {formatAudioTime(currentTime)} / {formatAudioTime(duration)}
+          {formatAudioTime(currentTime)} / {formatAudioTime(effectiveDuration)}
         </span>
         <div className="relative h-1.5 w-16 overflow-hidden rounded-full bg-muted">
           <div
@@ -142,7 +194,7 @@ export default function InlineAudioPlayer({
         size="icon-sm"
         variant="default"
         onClick={togglePlay}
-        className="rounded-full shadow-xs"
+        className="rounded-full shadow-xs cursor-pointer"
       >
         {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 ml-0.5" />}
       </Button>
@@ -155,7 +207,7 @@ export default function InlineAudioPlayer({
         <input
           type="range"
           min={0}
-          max={duration || 100}
+          max={effectiveDuration || 100}
           value={currentTime}
           onChange={handleSeek}
           className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-muted-foreground/20 accent-primary focus:outline-none"
@@ -163,7 +215,7 @@ export default function InlineAudioPlayer({
       </div>
 
       <span className="font-mono text-[11px] tabular-nums text-muted-foreground w-10">
-        {formatAudioTime(duration)}
+        {formatAudioTime(effectiveDuration)}
       </span>
 
       <div className="flex items-center gap-1">
@@ -172,7 +224,7 @@ export default function InlineAudioPlayer({
           size="icon-xs"
           variant="ghost"
           onClick={cyclePlaybackRate}
-          className="h-6 px-1.5 font-mono text-[10px] text-muted-foreground hover:text-foreground"
+          className="h-6 px-1.5 font-mono text-[10px] text-muted-foreground hover:text-foreground cursor-pointer"
           title="Playback speed"
         >
           {playbackRate}x
@@ -183,7 +235,7 @@ export default function InlineAudioPlayer({
           size="icon-xs"
           variant="ghost"
           onClick={toggleMute}
-          className="h-6 w-6 text-muted-foreground hover:text-foreground"
+          className="h-6 w-6 text-muted-foreground hover:text-foreground cursor-pointer"
           title={isMuted ? "Unmute" : "Mute"}
         >
           {isMuted ? <VolumeX className="h-3.5 w-3.5 text-destructive" /> : <Volume2 className="h-3.5 w-3.5" />}
@@ -194,7 +246,7 @@ export default function InlineAudioPlayer({
           download
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
           title="Download recording"
         >
           <Download className="h-3.5 w-3.5" />

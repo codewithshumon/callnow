@@ -173,7 +173,7 @@ export default function CallHistoryItem({
                 <FileAudio className="h-3.5 w-3.5 text-primary" /> Audio:
               </span>
               <div className="flex-1">
-                <InlineAudioPlayer src={call.recordingUrl} compact={true} />
+                <InlineAudioPlayer src={call.recordingUrl} compact={true} fallbackDuration={call.durationSeconds} />
               </div>
             </div>
 

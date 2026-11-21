@@ -204,7 +204,7 @@ export default function CallDetailSheet({ call, open, onClose }: Props) {
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
               <FileAudio className="h-3.5 w-3.5 text-primary" /> Call Recording
             </h4>
-            <InlineAudioPlayer src={call.recordingUrl} />
+            <InlineAudioPlayer src={call.recordingUrl} fallbackDuration={call.durationSeconds} />
           </div>
         )}
 

@@ -66,6 +66,8 @@ export default function CallRecordingsPage() {
   const [directionFilter, setDirectionFilter] = useState<"all" | "inbound" | "outbound">("all");
   const [callToDelete, setCallToDelete] = useState<Call | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
 
   // Fetch all calls and contacts
   const fetchRecordings = useCallback(async (showToast = false) => {
@@ -117,6 +119,9 @@ export default function CallRecordingsPage() {
 
   useEffect(() => {
     fetchRecordings();
+    const handleSaved = () => fetchRecordings();
+    window.addEventListener("call-recording-saved", handleSaved);
+    return () => window.removeEventListener("call-recording-saved", handleSaved);
   }, [fetchRecordings]);
 
   // Aggregate Metrics
@@ -173,6 +178,31 @@ export default function CallRecordingsPage() {
     }
   };
 
+  // Delete all recordings handler
+  const handleDeleteAllRecordings = async () => {
+    setDeletingAll(true);
+    try {
+      await del("/calls/recordings/all");
+      toast.success("All call recordings permanently deleted");
+      setCalls([]);
+      setDeleteAllOpen(false);
+    } catch {
+      // Fallback: delete each recording individually if needed
+      try {
+        await Promise.allSettled(
+          calls.map((c) => del(`/calls/${c.id}/recording`))
+        );
+        toast.success("All call recordings permanently deleted");
+        setCalls([]);
+        setDeleteAllOpen(false);
+      } catch {
+        toast.error("Failed to delete all call recordings");
+      }
+    } finally {
+      setDeletingAll(false);
+    }
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 w-full min-w-0 space-y-6">
       {/* Header Bar */}
@@ -206,6 +236,19 @@ export default function CallRecordingsPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {calls.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteAllOpen(true)}
+              disabled={deletingAll || loading}
+              className="h-9 gap-1.5 text-xs shadow-2xs bg-red-600 hover:bg-red-700 text-white cursor-pointer font-medium"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Delete All Recordings</span>
+            </Button>
+          )}
+
           <Button
             variant="outline"
             size="sm"
@@ -513,7 +556,7 @@ export default function CallRecordingsPage() {
                   {/* Audio Player Card Section */}
                   {call.recordingUrl && (
                     <div className="pt-2 border-t border-border/50">
-                      <InlineAudioPlayer src={call.recordingUrl} />
+                      <InlineAudioPlayer src={call.recordingUrl} fallbackDuration={call.durationSeconds} />
                     </div>
                   )}
                 </CardContent>
@@ -567,6 +610,49 @@ export default function CallRecordingsPage() {
                 <Trash2 className="h-3.5 w-3.5" />
               )}
               <span>{deleting ? "Deleting..." : "Permanently Delete"}</span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete All Recordings Dialog */}
+      <Dialog open={deleteAllOpen} onOpenChange={setDeleteAllOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              Delete All Call Recordings?
+            </DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm pt-2">
+              Are you sure you want to delete all <span className="font-semibold text-foreground">{calls.length}</span> call recordings?
+              <br /><br />
+              This will permanently delete all audio recording files (.webm) from the server. All call history records, timestamps, durations, and billing metrics will remain intact.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="gap-2 sm:gap-0 pt-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDeleteAllOpen(false)}
+              disabled={deletingAll}
+              className="text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteAllRecordings}
+              disabled={deletingAll}
+              className="text-xs gap-1.5 bg-red-600 hover:bg-red-700"
+            >
+              {deletingAll ? (
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="h-3.5 w-3.5" />
+              )}
+              <span>{deletingAll ? "Deleting All Recordings..." : `Delete All (${calls.length})`}</span>
             </Button>
           </DialogFooter>
         </DialogContent>

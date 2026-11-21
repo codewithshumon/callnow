@@ -112,6 +112,9 @@ export class CallingController {
           cb(null, `${sid}.webm`);
         },
       }),
+      limits: {
+        fileSize: 100 * 1024 * 1024, // 100 MB max for long recordings
+      },
     }),
   )
   async uploadCallRecording(
@@ -129,6 +132,12 @@ export class CallingController {
       fromNumber,
       direction,
     });
+  }
+
+  // Delete all call recordings
+  @Delete('calls/recordings/all')
+  async deleteAllCallRecordings(@CurrentUser('id') userId: string) {
+    return this.callingService.deleteAllCallRecordings(userId);
   }
 
   // Delete call recording

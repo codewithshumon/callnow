@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useAuthStore } from "@/store/authStore";
 import {
   Phone,
   PhoneCall,
@@ -70,6 +72,15 @@ const TESTIMONIALS = [
 ];
 
 export default function LandingPage() {
+  const user = useAuthStore((s) => s.user);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isLoggedIn = mounted && !!user;
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-primary">
       {/* =========================================================================
@@ -113,19 +124,31 @@ export default function LandingPage() {
           {/* Action CTAs & Theme Toggle */}
           <div className="flex items-center gap-2.5 sm:gap-3">
             <ThemeToggle />
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center rounded-xl px-3.5 py-2 text-xs sm:text-sm font-medium text-foreground hover:bg-muted transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/register"
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all active:scale-98"
-            >
-              <span>Get Started</span>
-              <ArrowRight className="h-4 w-4 hidden sm:inline-block" />
-            </Link>
+            {isLoggedIn ? (
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all active:scale-98"
+              >
+                <span>Dashboard</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center justify-center rounded-xl px-3.5 py-2 text-xs sm:text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/register"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all active:scale-98"
+                >
+                  <span>Get Started</span>
+                  <ArrowRight className="h-4 w-4 hidden sm:inline-block" />
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -162,21 +185,42 @@ export default function LandingPage() {
 
               {/* CTA Buttons */}
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5">
-                <Link
-                  href="/register"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-7 py-4 text-base font-semibold text-primary-foreground shadow-xl shadow-primary/30 hover:bg-primary/90 transition-all active:scale-98"
-                >
-                  <span>Start Calling Free</span>
-                  <ArrowRight className="h-5 w-5" />
-                </Link>
+                {isLoggedIn ? (
+                  <>
+                    <Link
+                      href="/calls/dialpad"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-7 py-4 text-base font-semibold text-primary-foreground shadow-xl shadow-primary/30 hover:bg-primary/90 transition-all active:scale-98"
+                    >
+                      <PhoneCall className="h-5 w-5" />
+                      <span>Go to Dashboard</span>
+                      <ArrowRight className="h-5 w-5" />
+                    </Link>
+                    <Link
+                      href="/calls"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-border/90 bg-card/70 px-6 py-4 text-base font-semibold text-foreground hover:bg-muted shadow-sm transition-all"
+                    >
+                      <span>View Call History</span>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/register"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-7 py-4 text-base font-semibold text-primary-foreground shadow-xl shadow-primary/30 hover:bg-primary/90 transition-all active:scale-98"
+                    >
+                      <span>Start Calling Free</span>
+                      <ArrowRight className="h-5 w-5" />
+                    </Link>
 
-                <Link
-                  href="/calls/dialpad"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-border/90 bg-card/70 px-6 py-4 text-base font-semibold text-foreground hover:bg-muted shadow-sm transition-all"
-                >
-                  <PhoneCall className="h-5 w-5 text-primary" />
-                  <span>Open Web Softphone</span>
-                </Link>
+                    <Link
+                      href="/calls/dialpad"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-border/90 bg-card/70 px-6 py-4 text-base font-semibold text-foreground hover:bg-muted shadow-sm transition-all"
+                    >
+                      <PhoneCall className="h-5 w-5 text-primary" />
+                      <span>Open Web Softphone</span>
+                    </Link>
+                  </>
+                )}
               </div>
 
               {/* Value trust badges */}
@@ -494,20 +538,32 @@ export default function LandingPage() {
               </p>
 
               <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link
-                  href="/register"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-xl shadow-primary/30 hover:bg-primary/90 transition-all active:scale-98"
-                >
-                  <span>Create Free Account</span>
-                  <ArrowRight className="h-5 w-5" />
-                </Link>
-                <Link
-                  href="/calls/dialpad"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-background/80 px-7 py-4 text-base font-semibold text-foreground hover:bg-muted transition-all"
-                >
-                  <Headphones className="h-5 w-5 text-primary" />
-                  <span>Try Softphone Now</span>
-                </Link>
+                {isLoggedIn ? (
+                  <Link
+                    href="/calls/dialpad"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-xl shadow-primary/30 hover:bg-primary/90 transition-all active:scale-98"
+                  >
+                    <span>Launch Phone Dialpad</span>
+                    <ArrowRight className="h-5 w-5" />
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/register"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-xl shadow-primary/30 hover:bg-primary/90 transition-all active:scale-98"
+                    >
+                      <span>Create Free Account</span>
+                      <ArrowRight className="h-5 w-5" />
+                    </Link>
+                    <Link
+                      href="/calls/dialpad"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-background/80 px-7 py-4 text-base font-semibold text-foreground hover:bg-muted transition-all"
+                    >
+                      <Headphones className="h-5 w-5 text-primary" />
+                      <span>Try Softphone Now</span>
+                    </Link>
+                  </>
+                )}
               </div>
 
               <p className="text-xs text-muted-foreground pt-2">

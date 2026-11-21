@@ -27,6 +27,8 @@ import {
   ChevronRight,
   ClipboardPaste,
   FileAudio,
+  Bell,
+  BellOff,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +46,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { get, getPaginated } from "@/lib/api";
 import { initializeCallClient, makeCall, hangUp, toggleMute, sendDigits as sendWebRtcDigits } from "@/lib/webrtc";
 import { useCallStore } from "@/store/callStore";
-import { playDtmfTone } from "@/lib/dtmf";
+import { playDtmfTone, isRingbackToneEnabled, setRingbackToneEnabled } from "@/lib/dtmf";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { CallToken, PhoneNumber, Call, Contact } from "@/lib/types";
@@ -92,10 +94,27 @@ export default function DialPad() {
   const [activeTab, setActiveTab] = useState<"recents" | "contacts">("recents");
   const [calling, setCalling] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [ringingSoundEnabled, setRingingSoundEnabled] = useState(true);
   const [showInCallKeypad, setShowInCallKeypad] = useState(false);
   const [playingCallId, setPlayingCallId] = useState<string | null>(null);
   const dialpadAudioRef = useRef<HTMLAudioElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Initialize ringing sound preference from localStorage
+  useEffect(() => {
+    setRingingSoundEnabled(isRingbackToneEnabled());
+  }, []);
+
+  const toggleRingingSound = useCallback(() => {
+    const next = !ringingSoundEnabled;
+    setRingingSoundEnabled(next);
+    setRingbackToneEnabled(next);
+    if (next) {
+      toast.success("Ringing sound enabled");
+    } else {
+      toast.info("Ringing sound muted (silent ringing)");
+    }
+  }, [ringingSoundEnabled]);
 
   // Audio cleanup on unmount
   useEffect(() => {
@@ -183,13 +202,20 @@ export default function DialPad() {
     }
   }, [voiceNumbers, fromNumber]);
 
-  // Auto-refresh recent calls when a call ends
+  // Auto-refresh recent calls when a call ends or when recording finishes uploading
   useEffect(() => {
-    if (!activeCall) {
+    const fetchRecents = () => {
       getPaginated<Call>("/calls", { limit: 10 })
         .then((r) => setRecentCalls(r.data || []))
         .catch(() => {});
+    };
+
+    if (!activeCall) {
+      fetchRecents();
     }
+
+    window.addEventListener("call-recording-saved", fetchRecents);
+    return () => window.removeEventListener("call-recording-saved", fetchRecents);
   }, [activeCall]);
 
   // Keypad audio & digit appending
@@ -335,21 +361,52 @@ export default function DialPad() {
           </h1>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Ringing Sound Setting (Outbound Call Ringback Tone) */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleRingingSound}
+            className={cn(
+              "text-xs gap-1.5 transition-all cursor-pointer shadow-2xs",
+              ringingSoundEnabled
+                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+                : "text-muted-foreground border-dashed hover:text-foreground"
+            )}
+            title={
+              ringingSoundEnabled
+                ? "Ringing sound: ON (Click to mute ringing tone for calls)"
+                : "Ringing sound: OFF (Click to unmute ringing tone for calls)"
+            }
+          >
+            {ringingSoundEnabled ? (
+              <>
+                <Bell className="h-4 w-4 text-emerald-500" />
+                <span>Ringing ON</span>
+              </>
+            ) : (
+              <>
+                <BellOff className="h-4 w-4 text-muted-foreground" />
+                <span>Ringing OFF</span>
+              </>
+            )}
+          </Button>
+
+          {/* Keypad DTMF Sound Setting */}
           <Button
             variant="outline"
             size="sm"
             onClick={() => setSoundEnabled(!soundEnabled)}
-            className="text-xs gap-1.5"
-            title={soundEnabled ? "Mute DTMF sound" : "Enable DTMF sound"}
+            className="text-xs gap-1.5 cursor-pointer shadow-2xs"
+            title={soundEnabled ? "Mute keypad DTMF sound" : "Enable keypad DTMF sound"}
           >
             {soundEnabled ? (
               <>
-                <Volume2 className="h-4 w-4 text-primary" /> Sound ON
+                <Volume2 className="h-4 w-4 text-primary" /> Keypad ON
               </>
             ) : (
               <>
-                <VolumeX className="h-4 w-4 text-muted-foreground" /> Sound OFF
+                <VolumeX className="h-4 w-4 text-muted-foreground" /> Keypad OFF
               </>
             )}
           </Button>

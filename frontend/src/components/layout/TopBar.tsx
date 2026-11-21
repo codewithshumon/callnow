@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 
 // Mobile top bar — shown only on mobile to identify current page
 const pageTitles: Record<string, string> = {
+  "/dashboard": "Dashboard",
   "/messages": "Messages",
   "/calls": "Calls",
   "/dialer": "Dialer",

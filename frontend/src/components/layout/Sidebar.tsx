@@ -17,6 +17,7 @@ export default function Sidebar() {
 
   // Render nothing on auth pages (they have their own layout)
   if (
+    !pathname?.startsWith("/dashboard") &&
     !pathname?.startsWith("/messages") &&
     !pathname?.startsWith("/calls") &&
     !pathname?.startsWith("/dialer") &&

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallStore } from "@/store/callStore";
+import { useAuthStore } from "@/store/authStore";
 import { startRingbackTone, stopRingbackTone } from "@/lib/dtmf";
 import type { CallToken } from "@/lib/types";
 
@@ -192,42 +193,136 @@ async function initTwilioDevice(token: string): Promise<void> {
   console.debug("[WebRTC] Twilio device registered");
 }
 
-// ── Zero-Cost Local Browser Call Recorder ───────────────────
+// ── Zero-Cost Local Browser Call Recorder (Dual-Channel / Both Sides) ───────────
 
 class BrowserAudioRecorder {
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
   private audioContext: AudioContext | null = null;
+  private dest: MediaStreamAudioDestinationNode | null = null;
   private micStream: MediaStream | null = null;
+  private remoteSource: MediaStreamAudioSourceNode | null = null;
+  private pollInterval: ReturnType<typeof setInterval> | null = null;
 
-  async startRecording(remoteStream?: MediaStream | null) {
+  private tryAttachRemoteStream(stream: MediaStream | null | undefined): boolean {
+    if (!stream || !this.audioContext || !this.dest || this.remoteSource) return false;
+    const audioTracks = stream.getAudioTracks();
+    if (audioTracks.length === 0) return false;
+
+    try {
+      this.remoteSource = this.audioContext.createMediaStreamSource(stream);
+      this.remoteSource.connect(this.dest);
+      console.debug("[Recorder] Remote party audio successfully connected to recording mix!");
+      return true;
+    } catch (err) {
+      console.warn("[Recorder] Failed attaching remote stream:", err);
+      return false;
+    }
+  }
+
+  private extractRemoteStream(twilioCall: any): MediaStream | null {
+    if (!twilioCall) return null;
+
+    // 1. Direct Twilio SDK getter
+    if (typeof twilioCall.getRemoteStream === "function") {
+      const s = twilioCall.getRemoteStream();
+      if (s && s.getAudioTracks().length > 0) return s;
+    }
+
+    // 2. _mediaHandler._remoteStream
+    const mh = twilioCall._mediaHandler;
+    if (mh?._remoteStream && mh._remoteStream.getAudioTracks().length > 0) {
+      return mh._remoteStream;
+    }
+
+    // 3. Audio element srcObject from outputs
+    const defaultOutput = mh?.outputs?.get?.("default")?.audio || mh?._masterAudio;
+    if (defaultOutput?.srcObject instanceof MediaStream && defaultOutput.srcObject.getAudioTracks().length > 0) {
+      return defaultOutput.srcObject;
+    }
+
+    // 4. RTCPeerConnection receiver audio tracks
+    const pc: RTCPeerConnection | null =
+      mh?.version?.pc || mh?._peerConnection || twilioCall.peerConnection || null;
+    if (pc && typeof pc.getReceivers === "function") {
+      const audioReceiver = pc.getReceivers().find((r) => r.track && r.track.kind === "audio");
+      if (audioReceiver?.track) {
+        return new MediaStream([audioReceiver.track]);
+      }
+    }
+
+    return null;
+  }
+
+  async startRecording(twilioCallOrStream?: any) {
     if (typeof window === "undefined") return;
+    this.cleanupNodes();
+
     try {
       this.audioChunks = [];
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       this.audioContext = new AudioCtx();
-      const dest = this.audioContext.createMediaStreamDestination();
+      if (this.audioContext.state === "suspended") {
+        await this.audioContext.resume();
+      }
+      this.dest = this.audioContext.createMediaStreamDestination();
 
-      // 1. Capture local microphone
+      // 1. Capture local microphone audio
       try {
-        this.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        this.micStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
         const micSource = this.audioContext.createMediaStreamSource(this.micStream);
-        micSource.connect(dest);
+        micSource.connect(this.dest);
       } catch (err) {
         console.warn("[Recorder] Mic stream capture failed:", err);
       }
 
-      // 2. Capture remote audio stream from recipient
-      if (remoteStream && remoteStream.getAudioTracks().length > 0) {
-        try {
-          const remoteSource = this.audioContext.createMediaStreamSource(remoteStream);
-          remoteSource.connect(dest);
-        } catch (err) {
-          console.warn("[Recorder] Remote stream capture failed:", err);
+      // 2. Capture and mix remote client audio
+      let attached = false;
+      if (twilioCallOrStream instanceof MediaStream) {
+        attached = this.tryAttachRemoteStream(twilioCallOrStream);
+      } else if (twilioCallOrStream) {
+        attached = this.tryAttachRemoteStream(this.extractRemoteStream(twilioCallOrStream));
+
+        // Listen on WebRTC RTCPeerConnection 'track' event
+        const pc: RTCPeerConnection | null =
+          twilioCallOrStream._mediaHandler?.version?.pc ||
+          twilioCallOrStream._mediaHandler?._peerConnection ||
+          twilioCallOrStream.peerConnection ||
+          null;
+
+        if (pc && typeof pc.addEventListener === "function") {
+          pc.addEventListener("track", (event: RTCTrackEvent) => {
+            if (event.track?.kind === "audio") {
+              const stream = event.streams?.[0] || new MediaStream([event.track]);
+              this.tryAttachRemoteStream(stream);
+            }
+          });
         }
+
+        // Poll every 200ms for up to 6 seconds in case media negotiates slightly after accept
+        let pollCount = 0;
+        this.pollInterval = setInterval(() => {
+          pollCount++;
+          if (attached || this.remoteSource || pollCount > 30) {
+            if (this.pollInterval) clearInterval(this.pollInterval);
+            this.pollInterval = null;
+            return;
+          }
+          const s = this.extractRemoteStream(twilioCallOrStream);
+          if (s) {
+            attached = this.tryAttachRemoteStream(s);
+          }
+        }, 200);
       }
 
-      const streamToRecord = dest.stream.getAudioTracks().length > 0 ? dest.stream : this.micStream;
+      const streamToRecord =
+        this.dest.stream.getAudioTracks().length > 0 ? this.dest.stream : this.micStream;
       if (!streamToRecord) return;
 
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
@@ -243,17 +338,40 @@ class BrowserAudioRecorder {
       };
 
       this.mediaRecorder.start(1000);
-      console.debug("[Recorder] Zero-cost call recording started automatically");
+      console.debug("[Recorder] Dual-party conversation recording started automatically");
     } catch (err) {
       console.warn("[Recorder] Failed to start local recording:", err);
     }
+  }
+
+  private cleanupNodes() {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
+    }
+    if (this.remoteSource) {
+      try { this.remoteSource.disconnect(); } catch {}
+      this.remoteSource = null;
+    }
+    if (this.micStream) {
+      this.micStream.getTracks().forEach((t) => t.stop());
+      this.micStream = null;
+    }
+    if (this.audioContext) {
+      try { this.audioContext.close(); } catch {}
+      this.audioContext = null;
+    }
+    this.dest = null;
   }
 
   async stopRecordingAndUpload(
     callSid: string,
     meta?: { to?: string; from?: string; direction?: string }
   ): Promise<void> {
-    if (!this.mediaRecorder || this.mediaRecorder.state === "inactive") return;
+    if (!this.mediaRecorder || this.mediaRecorder.state === "inactive") {
+      this.cleanupNodes();
+      return;
+    }
 
     return new Promise((resolve) => {
       this.mediaRecorder!.onstop = async () => {
@@ -266,30 +384,76 @@ class BrowserAudioRecorder {
             if (meta?.from) formData.append("fromNumber", meta.from);
             if (meta?.direction) formData.append("direction", meta.direction);
 
-            await fetch(`/api/calls/${encodeURIComponent(callSid)}/recording`, {
-              method: "POST",
-              body: formData,
-            });
-            console.debug(`[Recorder] Recording auto-saved locally for call ${callSid}`);
+            // Proactively refresh session if access token is absent or potentially stale
+            let accessToken = useAuthStore.getState().accessToken;
+            if (!accessToken && useAuthStore.getState().refreshToken) {
+              await useAuthStore.getState().refreshSession().catch(() => {});
+              accessToken = useAuthStore.getState().accessToken;
+            }
+
+            // Retry upload up to 3 times with exponential backoff & token refresh on 401
+            let uploaded = false;
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              try {
+                const headers: Record<string, string> = {};
+                if (accessToken) {
+                  headers["Authorization"] = `Bearer ${accessToken}`;
+                }
+
+                const res = await fetch(`/api/calls/${encodeURIComponent(callSid)}/recording`, {
+                  method: "POST",
+                  headers,
+                  body: formData,
+                });
+
+                if (res.ok) {
+                  uploaded = true;
+                  console.debug(`[Recorder] Recording auto-saved successfully for call ${callSid} (attempt ${attempt})`);
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(
+                      new CustomEvent("call-recording-saved", {
+                        detail: { callSid, toNumber: meta?.to },
+                      })
+                    );
+                  }
+                  break;
+                }
+
+                // If 401 Unauthorized (expired during long call), refresh token and retry
+                if (res.status === 401 && attempt < 3) {
+                  console.warn(`[Recorder] 401 on upload attempt ${attempt}, refreshing session and retrying...`);
+                  await useAuthStore.getState().refreshSession().catch(() => {});
+                  accessToken = useAuthStore.getState().accessToken;
+                }
+              } catch (attemptErr) {
+                console.warn(`[Recorder] Recording upload attempt ${attempt} error:`, attemptErr);
+              }
+
+              if (!uploaded && attempt < 3) {
+                await new Promise((r) => setTimeout(r, 1000 * attempt));
+              }
+            }
+
+            if (!uploaded) {
+              console.error(`[Recorder] Failed to upload recording for ${callSid} after 3 attempts`);
+            }
           }
         } catch (err) {
           console.warn("[Recorder] Failed to upload local recording:", err);
         } finally {
-          if (this.micStream) {
-            this.micStream.getTracks().forEach((t) => t.stop());
-            this.micStream = null;
-          }
-          if (this.audioContext) {
-            this.audioContext.close().catch(() => {});
-            this.audioContext = null;
-          }
+          this.cleanupNodes();
           this.mediaRecorder = null;
           this.audioChunks = [];
           resolve();
         }
       };
 
-      this.mediaRecorder!.stop();
+      try {
+        this.mediaRecorder!.stop();
+      } catch {
+        this.cleanupNodes();
+        resolve();
+      }
     });
   }
 }
@@ -306,11 +470,8 @@ function setupTwilioCallHandlers(twilioCall: TwilioCall): void {
     stopRingbackTone();
     useCallStore.getState().setCallStatus("in-progress");
     currentCall = twilioCall;
-    // Auto-record both sides locally with 0 Twilio recording fees
-    const remoteStream =
-      (twilioCall as any).getRemoteStream?.() ||
-      (twilioCall as any)._mediaHandler?._remoteStream;
-    callRecorder.startRecording(remoteStream);
+    // Auto-record both caller and callee locally with 0 Twilio recording fees
+    callRecorder.startRecording(twilioCall);
   });
 
   const handleEnd = () => {
@@ -322,11 +483,19 @@ function setupTwilioCallHandlers(twilioCall: TwilioCall): void {
       (twilioCall as any).outboundConnectionId ||
       `call-${Date.now()}`;
 
+    // Read activeCall state before ending in case activeCallMetadata was reset
+    const activeCall = useCallStore.getState().activeCall;
     const meta = activeCallMetadata
       ? {
           to: activeCallMetadata.to,
           from: activeCallMetadata.from,
           direction: "outbound",
+        }
+      : activeCall
+      ? {
+          to: activeCall.to,
+          from: activeCall.from,
+          direction: (activeCall as any)?.direction || "outbound",
         }
       : undefined;
 

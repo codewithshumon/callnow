@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
+  LayoutDashboard,
   MessageSquare,
   Phone,
   PhoneCall,
@@ -19,6 +20,12 @@ import {
 } from "lucide-react";
 
 const navSections = [
+  {
+    title: "Overview",
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    ],
+  },
   {
     title: "Communications",
     items: [
